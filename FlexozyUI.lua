@@ -232,13 +232,13 @@ function Flexozy:CreateWindow(cfg)
         return g
     end
     -- ขอบเรืองแสง: แสงแถบเดียววิ่งวนรอบกรอบช้าๆ ส่วนที่เหลือจางๆ
-    local function GlowBorder(obj, thick, speed)
+    local function GlowBorder(obj, thick, speed, base)
         local st = New("UIStroke", { Color = WHITE, Thickness = thick or 1.6, ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, obj)
         local g = New("UIGradient", {
             Transparency = NumberSequence.new({
-                NumberSequenceKeypoint.new(0, 0.9), NumberSequenceKeypoint.new(0.3, 0.9),
+                NumberSequenceKeypoint.new(0, base or 0.9), NumberSequenceKeypoint.new(0.3, base or 0.9),
                 NumberSequenceKeypoint.new(0.5, 0),
-                NumberSequenceKeypoint.new(0.7, 0.9), NumberSequenceKeypoint.new(1, 0.9),
+                NumberSequenceKeypoint.new(0.7, base or 0.9), NumberSequenceKeypoint.new(1, base or 0.9),
             }),
         }, st)
         Themed(function() g.Color = ColorSequence.new(T.Accent:Lerp(WHITE, 0.3)) end)
@@ -409,10 +409,9 @@ function Flexozy:CreateWindow(cfg)
         BackgroundTransparency = 0.03, BorderSizePixel = 0,
     }, Gui)
     local mainCorner = Round(Main, 16)
-    local mainStroke = Stroke(Main, T.Stroke, 1.2)
+    local mainStroke = GlowBorder(Main, 1.6, 55, 0.6) -- ขอบหน้าต่างหลักเรืองแสงวิ่งวน
     New("UIGradient", { Color = ColorSequence.new(WHITE, C(208, 208, 220)), Rotation = 90 }, Main)
     W.Main = Main
-    Themed(function() mainStroke.Color = T.Stroke:Lerp(T.Accent, 0.35) end)
     local Scale = New("UIScale", {}, Main)
     local function TargetScale()
         if W.Maximized then return 1 end
