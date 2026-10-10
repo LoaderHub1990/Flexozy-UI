@@ -409,12 +409,51 @@ function Flexozy:CreateWindow(cfg)
     if workspace.CurrentCamera then
         Conn(workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"), function() W:Rescale() end)
     end
+    local function ResolveLogo(src, cb)
+        if src == nil or src == "" then return end
+        if type(src) == "number" then cb("rbxassetid://" .. tostring(src)) return end
+        src = tostring(src)
+        if src:match("^%d+$") then cb("rbxassetid://" .. src) return end
+        if src:match("^rbxassetid://") or src:match("^rbxthumb://") or src:match("^rbxasset://") then cb(src) return end
+        task.spawn(function()
+            local ok, asset = pcall(function()
+                if not getcustomasset then error("no getcustomasset") end
+                if src:match("^https?://") then
+                    if not (writefile and isfile) then error("no fs") end
+                    local key = (src:gsub("[^%w]", "")):sub(-24)
+                    local path = W.Folder .. "/logo_" .. key .. ".png"
+                    if makefolder and isfolder and not isfolder(W.Folder) then makefolder(W.Folder) end
+                    if not isfile(path) then writefile(path, game:HttpGet(src)) end
+                    return getcustomasset(path)
+                end
+                return getcustomasset(src)
+            end)
+            if ok and asset then cb(asset) end
+        end)
+    end
+
+    local function ApplyLogo(host, onLoaded, src, inset)
+        ResolveLogo(src, function(img)
+            if not host.Parent then return end
+            local il = New("ImageLabel", {
+                Position = UDim2.fromOffset(inset, inset), Size = UDim2.new(1, -inset * 2, 1, -inset * 2),
+                BackgroundTransparency = 1, Image = img, ScaleType = Enum.ScaleType.Fit,
+            }, host)
+            Round(il, 9)
+            onLoaded()
+        end)
+    end
+
     local Header = New("Frame", { Size = UDim2.new(1, 0, 0, HEADER), BackgroundTransparency = 1 }, Main)
     MakeDraggable(Header, Main, Conn)
     local Logo = New("Frame", { Size = UDim2.fromOffset(40, 40), Position = UDim2.fromOffset(18, 13), BorderSizePixel = 0 }, Header)
     Round(Logo, 11)
     AccentGrad(Logo, 45)
-    Label(Logo, { Size = UDim2.fromScale(1, 1), Text = mono, Font = Enum.Font.GothamBold, TextSize = 14, TextColor3 = WHITE, TextXAlignment = Enum.TextXAlignment.Center })
+    local logoText = Label(Logo, { Size = UDim2.fromScale(1, 1), Text = mono, Font = Enum.Font.GothamBold, TextSize = 14, TextColor3 = WHITE, TextXAlignment = Enum.TextXAlignment.Center })
+    ApplyLogo(Logo, function()
+        logoText.Visible = false
+        Logo.BackgroundTransparency = 1
+    end, cfg.Logo, 0)
     Label(Header, { Position = UDim2.fromOffset(68, 14), Size = UDim2.new(1, -200, 0, 18), Text = title, Font = Enum.Font.GothamBold, TextSize = 14 })
     Label(Header, { Position = UDim2.fromOffset(68, 34), Size = UDim2.new(1, -200, 0, 14), Text = sub, TextSize = 10, TextColor3 = T.Muted })
     local function HeaderButton(xFromRight)
@@ -1315,6 +1354,7 @@ function Flexozy:CreateWindow(cfg)
         W:Toggle()
     end)
     W.Float = Float
+    ApplyLogo(Float, function() Float.Text = "" end, cfg.FloatLogo or cfg.Logo, 3)
     local pill = New("Frame", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 14), Size = UDim2.fromOffset(150, 30), BackgroundColor3 = C(20, 20, 24), BackgroundTransparency = 0.1, BorderSizePixel = 0, Visible = cfg.StatsPill ~= false }, Gui)
     Round(pill, 15)
     Stroke(pill, T.Stroke, 1)
