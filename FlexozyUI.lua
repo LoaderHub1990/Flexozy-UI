@@ -10,7 +10,7 @@ local LP           = Players.LocalPlayer
 local WHITE, BLACK = Color3.new(1, 1, 1), Color3.new(0, 0, 0)
 local function C(r, g, b) return Color3.fromRGB(r, g, b) end
 local Flexozy = {
-    Version = "3.0.0",
+    Version = "3.1.0",
     Icons = {
         Grid     = "rbxassetid://10709752035",
         Sword    = "rbxassetid://10709818534",
@@ -119,9 +119,10 @@ local function GuiParent()
     local ok, p = pcall(function() return (gethui and gethui()) or CoreGui end)
     return (ok and p) or LP:WaitForChild("PlayerGui")
 end
-local function MakeDraggable(handle, target, conn)
+local function MakeDraggable(handle, target, conn, can)
     local dragging, startIn, startPos, moved = false, nil, nil, false
     conn(handle.InputBegan, function(i)
+        if can and not can() then return end
         if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
             dragging, moved = true, false
             startIn, startPos = i.Position, target.Position
@@ -177,6 +178,9 @@ local DefaultDict = {
     ["Load config"] = "โหลดคอนฟิก", ["Load values from the file"] = "โหลดค่าจากไฟล์",
     ["Reset UI settings"] = "รีเซ็ตการตั้งค่า UI", ["Restore UI options to default"] = "คืนค่าหมวด UI เป็นค่าเริ่มต้น",
     ["Saved"] = "บันทึกแล้ว", ["Loaded"] = "โหลดแล้ว", ["UI settings reset"] = "รีเซ็ตการตั้งค่าแล้ว",
+    ["Profile"] = "โปรไฟล์", ["User ID"] = "ไอดีผู้ใช้", ["Account age"] = "อายุบัญชี", ["Created"] = "สร้างเมื่อ",
+    ["Membership"] = "สมาชิก", ["Executor"] = "Executor", ["Place ID"] = "ไอดีแมพ", ["days"] = "วัน",
+    ["Copy User ID"] = "คัดลอก User ID", ["Copied"] = "คัดลอกแล้ว", ["Unknown"] = "ไม่ทราบ",
 }
 
 local function Greeting()
@@ -206,7 +210,7 @@ function Flexozy:CreateWindow(cfg)
         ConfigName = cfg.ConfigName or "default", Folder = cfg.Folder or "Flexozy",
         NotifyEnabled = true, AccentName = startName or "Violet",
         Lang = NormLang(cfg.Language), LangScope = NormScope(cfg.LanguageScope), LangFns = {}, Dict = { EN = {}, TH = {} },
-        Shown = true, Listening = false, Version = Flexozy.Version,
+        Shown = true, Listening = false, Version = Flexozy.Version, Maximized = false,
     }
     local function Conn(sig, fn)
         local c = sig:Connect(fn)
@@ -226,6 +230,25 @@ function Flexozy:CreateWindow(cfg)
             g.Color = ColorSequence.new(T.Accent:Lerp(WHITE, 0.18), T.Accent:Lerp(BLACK, 0.22))
         end)
         return g
+    end
+    -- ขอบเรืองแสง: แสงแถบเดียววิ่งวนรอบกรอบช้าๆ ส่วนที่เหลือจางๆ
+    local function GlowBorder(obj, thick, speed)
+        local st = New("UIStroke", { Color = WHITE, Thickness = thick or 1.6, ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, obj)
+        local g = New("UIGradient", {
+            Transparency = NumberSequence.new({
+                NumberSequenceKeypoint.new(0, 0.9), NumberSequenceKeypoint.new(0.3, 0.9),
+                NumberSequenceKeypoint.new(0.5, 0),
+                NumberSequenceKeypoint.new(0.7, 0.9), NumberSequenceKeypoint.new(1, 0.9),
+            }),
+        }, st)
+        Themed(function() g.Color = ColorSequence.new(T.Accent:Lerp(WHITE, 0.3)) end)
+        local rot = 0
+        Conn(RunService.Heartbeat, function(dt)
+            if not W.Shown or W.Unloaded then return end
+            rot = (rot + dt * (speed or 70)) % 360
+            g.Rotation = rot
+        end)
+        return st
     end
     local function Tr(raw, kind)
         local sc = W.LangScope
@@ -385,13 +408,14 @@ function Flexozy:CreateWindow(cfg)
         Size = UDim2.fromOffset(size.X, size.Y), BackgroundColor3 = T.Window,
         BackgroundTransparency = 0.03, BorderSizePixel = 0,
     }, Gui)
-    Round(Main, 16)
+    local mainCorner = Round(Main, 16)
     local mainStroke = Stroke(Main, T.Stroke, 1.2)
     New("UIGradient", { Color = ColorSequence.new(WHITE, C(208, 208, 220)), Rotation = 90 }, Main)
     W.Main = Main
     Themed(function() mainStroke.Color = T.Stroke:Lerp(T.Accent, 0.35) end)
     local Scale = New("UIScale", {}, Main)
     local function TargetScale()
+        if W.Maximized then return 1 end
         local s = W.UserScale
         if W.AutoFit then
             local cam = workspace.CurrentCamera
@@ -403,7 +427,13 @@ function Flexozy:CreateWindow(cfg)
         return math.clamp(s, 0.2, 3)
     end
     function W:Rescale()
-        if W.Shown then Scale.Scale = TargetScale() end
+        if W.Shown then
+            Scale.Scale = TargetScale()
+            if W.Maximized then
+                local cam = workspace.CurrentCamera
+                if cam then Main.Size = UDim2.fromOffset(cam.ViewportSize.X, cam.ViewportSize.Y) end
+            end
+        end
     end
     Scale.Scale = TargetScale()
     if workspace.CurrentCamera then
@@ -445,7 +475,7 @@ function Flexozy:CreateWindow(cfg)
     end
 
     local Header = New("Frame", { Size = UDim2.new(1, 0, 0, HEADER), BackgroundTransparency = 1 }, Main)
-    MakeDraggable(Header, Main, Conn)
+    MakeDraggable(Header, Main, Conn, function() return not W.Maximized end)
     local Logo = New("Frame", { Size = UDim2.fromOffset(40, 40), Position = UDim2.fromOffset(18, 13), BorderSizePixel = 0 }, Header)
     Round(Logo, 11)
     AccentGrad(Logo, 45)
@@ -454,8 +484,8 @@ function Flexozy:CreateWindow(cfg)
         logoText.Visible = false
         Logo.BackgroundTransparency = 1
     end, cfg.Logo, 0)
-    Label(Header, { Position = UDim2.fromOffset(68, 14), Size = UDim2.new(1, -200, 0, 18), Text = title, Font = Enum.Font.GothamBold, TextSize = 14 })
-    Label(Header, { Position = UDim2.fromOffset(68, 34), Size = UDim2.new(1, -200, 0, 14), Text = sub, TextSize = 10, TextColor3 = T.Muted })
+    Label(Header, { Position = UDim2.fromOffset(68, 14), Size = UDim2.new(1, -250, 0, 18), Text = title, Font = Enum.Font.GothamBold, TextSize = 14 })
+    Label(Header, { Position = UDim2.fromOffset(68, 34), Size = UDim2.new(1, -250, 0, 14), Text = sub, TextSize = 10, TextColor3 = T.Muted })
     local function HeaderButton(xFromRight)
         local b = New("TextButton", {
             Size = UDim2.fromOffset(32, 32), Position = UDim2.new(1, xFromRight, 0, 17),
@@ -468,8 +498,11 @@ function Flexozy:CreateWindow(cfg)
         b.MouseLeave:Connect(function() Tween(b, 0.15, { BackgroundColor3 = T.Card }) end)
         return b
     end
-    local BtnCollapse = HeaderButton(-86)
-    local sq = New("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.fromOffset(13, 13), BackgroundTransparency = 1 }, BtnCollapse)
+    local BtnMin = HeaderButton(-124)
+    local dash = New("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.fromOffset(12, 2), BackgroundColor3 = T.Text, BorderSizePixel = 0 }, BtnMin)
+    Round(dash, 1)
+    local BtnMax = HeaderButton(-86)
+    local sq = New("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.fromOffset(12, 12), BackgroundTransparency = 1 }, BtnMax)
     Round(sq, 3)
     Stroke(sq, T.Text, 1.5)
     local BtnClose = HeaderButton(-48)
@@ -489,9 +522,13 @@ function Flexozy:CreateWindow(cfg)
     New("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 4) }, Nav)
     local navOrder = 0
     local function NextNav() navOrder += 1 return navOrder end
-    local UserCard = New("Frame", { AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 8, 1, -8), Size = UDim2.new(1, -16, 0, 56), BackgroundColor3 = T.Card, BorderSizePixel = 0 }, Sidebar)
+    local UserCard = New("TextButton", {
+        AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 8, 1, -8), Size = UDim2.new(1, -16, 0, 56),
+        BackgroundColor3 = T.Card, BorderSizePixel = 0, Text = "", AutoButtonColor = false,
+    }, Sidebar)
     Round(UserCard, 12)
-    Stroke(UserCard, T.Stroke, 1, 0.3)
+    GlowBorder(UserCard, 1.6, 70)
+    Interact(UserCard)
     local Avatar = New("ImageLabel", {
         Size = UDim2.fromOffset(36, 36), Position = UDim2.fromOffset(10, 10), BackgroundColor3 = T.Card2,
         Image = "rbxthumb://type=AvatarHeadShot&id=" .. tostring(LP.UserId) .. "&w=150&h=150",
@@ -502,6 +539,94 @@ function Flexozy:CreateWindow(cfg)
     Stroke(Dot, T.Card, 2)
     Label(UserCard, { Position = UDim2.fromOffset(54, 12), Size = UDim2.new(1, -60, 0, 16), Text = LP.DisplayName, Font = Enum.Font.GothamBold, TextSize = 11 })
     Label(UserCard, { Position = UDim2.fromOffset(54, 29), Size = UDim2.new(1, -60, 0, 14), Text = "@" .. LP.Name, TextSize = 9.5, TextColor3 = T.Muted })
+
+    -- ป๊อปอัพข้อมูลโปรไฟล์
+    local Pop = New("Frame", {
+        Name = "ProfilePopup", AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 18, 1, -82),
+        Size = UDim2.fromOffset(250, 0), AutomaticSize = Enum.AutomaticSize.Y,
+        BackgroundColor3 = C(26, 26, 32), BorderSizePixel = 0, Visible = false, ZIndex = 30,
+    }, Main)
+    Round(Pop, 14)
+    local popStroke = Stroke(Pop, T.Stroke, 1.2)
+    Themed(function() popStroke.Color = T.Stroke:Lerp(T.Accent, 0.4) end)
+    New("UIPadding", { PaddingTop = UDim.new(0, 12), PaddingBottom = UDim.new(0, 12), PaddingLeft = UDim.new(0, 14), PaddingRight = UDim.new(0, 14) }, Pop)
+    New("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 8) }, Pop)
+    local PopScale = New("UIScale", {}, Pop)
+
+    local ph = New("Frame", { Size = UDim2.new(1, 0, 0, 52), BackgroundTransparency = 1, LayoutOrder = 1 }, Pop)
+    local pav = New("ImageLabel", { Size = UDim2.fromOffset(48, 48), BackgroundColor3 = T.Card2, Image = "rbxthumb://type=AvatarHeadShot&id=" .. tostring(LP.UserId) .. "&w=150&h=150" }, ph)
+    Round(pav, 24)
+    Label(ph, { Position = UDim2.fromOffset(58, 6), Size = UDim2.new(1, -58, 0, 18), Text = LP.DisplayName, Font = Enum.Font.GothamBold, TextSize = 13 })
+    Label(ph, { Position = UDim2.fromOffset(58, 26), Size = UDim2.new(1, -58, 0, 14), Text = "@" .. LP.Name, TextSize = 10, TextColor3 = T.Muted })
+    New("Frame", { Size = UDim2.new(1, 0, 0, 1), BackgroundColor3 = T.Stroke, BackgroundTransparency = 0.4, BorderSizePixel = 0, LayoutOrder = 2 }, Pop)
+
+    local function InfoRow(order, key, getVal)
+        local r = New("Frame", { Size = UDim2.new(1, 0, 0, 16), BackgroundTransparency = 1, LayoutOrder = order }, Pop)
+        local k = Label(r, { Size = UDim2.new(0.42, 0, 1, 0), Text = "", TextSize = 10, TextColor3 = T.Dim })
+        Loc(key, "ui", function(t) k.Text = t end)
+        local v = Label(r, { AnchorPoint = Vector2.new(1, 0), Position = UDim2.fromScale(1, 0), Size = UDim2.new(0.58, 0, 1, 0), Text = "", TextXAlignment = Enum.TextXAlignment.Right, Font = Enum.Font.GothamMedium, TextSize = 10 })
+        local function upd() v.Text = getVal() end
+        upd()
+        table.insert(W.LangFns, upd)
+    end
+    local function createdText()
+        local ok, s = pcall(os.date, "%d/%m/%Y", os.time() - LP.AccountAge * 86400)
+        return ok and s or "-"
+    end
+    local function execText()
+        local ok, n = pcall(function() return identifyexecutor and (identifyexecutor()) end)
+        return (ok and n) and tostring(n) or Tr("Unknown", "ui")
+    end
+    InfoRow(3, "User ID", function() return tostring(LP.UserId) end)
+    InfoRow(4, "Account age", function() return tostring(LP.AccountAge) .. " " .. Tr("days", "ui") end)
+    InfoRow(5, "Created", createdText)
+    InfoRow(6, "Membership", function() return Tr(LP.MembershipType.Name, "ui") end)
+    InfoRow(7, "Place ID", function() return tostring(game.PlaceId) end)
+    InfoRow(8, "Executor", execText)
+
+    local copyBtn = New("TextButton", { Size = UDim2.new(1, 0, 0, 28), BackgroundColor3 = T.Card2, Text = "", AutoButtonColor = false, LayoutOrder = 9 }, Pop)
+    Round(copyBtn, 8)
+    Stroke(copyBtn, T.Stroke, 1, 0.3)
+    Interact(copyBtn)
+    local copyLbl = Label(copyBtn, { Size = UDim2.fromScale(1, 1), Text = "", TextXAlignment = Enum.TextXAlignment.Center, Font = Enum.Font.GothamBold, TextSize = 10.5 })
+    Loc("Copy User ID", "ui", function(t) copyLbl.Text = t end)
+    copyBtn.MouseButton1Click:Connect(function()
+        local fn = setclipboard or toclipboard
+        if fn and pcall(fn, tostring(LP.UserId)) then
+            W:Notify({ Title = "Profile", Content = "Copied", Type = "Success", Force = true })
+        else
+            W:Notify({ Title = "Profile", Content = "executor ไม่รองรับ setclipboard", Type = "Error", Force = true })
+        end
+    end)
+
+    local popOpen, popTok = false, 0
+    local function SetProfile(on)
+        if on == popOpen then return end
+        popOpen = on
+        popTok += 1
+        local tok = popTok
+        if on then
+            Pop.Visible = true
+            PopScale.Scale = 0.9
+            Tween(PopScale, 0.25, { Scale = 1 }, Enum.EasingStyle.Back)
+        else
+            Tween(PopScale, 0.15, { Scale = 0.92 }, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+            task.delay(0.15, function() if popTok == tok then Pop.Visible = false end end)
+        end
+    end
+    UserCard.MouseButton1Click:Connect(function() SetProfile(not popOpen) end)
+    Conn(UIS.InputBegan, function(i)
+        if not popOpen then return end
+        if i.UserInputType ~= Enum.UserInputType.MouseButton1 and i.UserInputType ~= Enum.UserInputType.Touch then return end
+        local p = i.Position
+        local function inside(o)
+            local a, s = o.AbsolutePosition, o.AbsoluteSize
+            return p.X >= a.X and p.X <= a.X + s.X and p.Y >= a.Y and p.Y <= a.Y + s.Y
+        end
+        if inside(Pop) or inside(UserCard) then return end
+        SetProfile(false)
+    end)
+
     local Footer
     local function GetFooter()
         if not Footer then
@@ -1297,6 +1422,7 @@ function Flexozy:CreateWindow(cfg)
             Main.Visible = true
             Tween(Scale, 0.32, { Scale = target }, Enum.EasingStyle.Back)
         else
+            SetProfile(false)
             W._ddOpen = nil
             Tween(Scale, 0.18, { Scale = target * 0.88 }, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
             task.delay(0.18, function()
@@ -1312,14 +1438,47 @@ function Flexozy:CreateWindow(cfg)
         Scale.Scale = t * 0.88
         Tween(Scale, 0.4, { Scale = t }, Enum.EasingStyle.Back)
     end
-    local collapsed = false
-    BtnCollapse.MouseButton1Click:Connect(function()
+
+    -- ย่อ (-) และขยายเต็มจอ (□)
+    local collapsed, savedPos = false, nil
+    local function VP()
+        local cam = workspace.CurrentCamera
+        return cam and cam.ViewportSize or Vector2.new(size.X, size.Y)
+    end
+    local function Apply()
+        local full = W.Maximized == true
+        local w, h
+        if full then local v = VP() w, h = v.X, v.Y else w, h = size.X, size.Y end
+        if collapsed then h = HEADER end
+        local goal = { Size = UDim2.fromOffset(w, h) }
+        if full then
+            goal.Position = UDim2.fromScale(0.5, 0.5)
+        elseif savedPos then
+            goal.Position = savedPos
+            savedPos = nil
+        end
+        Tween(Main, 0.28, goal)
+        Tween(Scale, 0.28, { Scale = TargetScale() }, Enum.EasingStyle.Quad)
+        Tween(mainCorner, 0.28, { CornerRadius = UDim.new(0, full and 0 or 16) })
+    end
+    BtnMax.MouseButton1Click:Connect(function()
+        local on = not W.Maximized
+        if on then
+            savedPos = Main.Position
+            if collapsed then collapsed = false Body.Visible = true end
+        end
+        W.Maximized = on
+        Apply()
+    end)
+    BtnMin.MouseButton1Click:Connect(function()
         collapsed = not collapsed
         if collapsed then
+            SetProfile(false)
             Body.Visible = false
-            Tween(Main, 0.25, { Size = UDim2.fromOffset(size.X, HEADER) })
+            W.Maximized = false
+            Apply()
         else
-            Tween(Main, 0.25, { Size = UDim2.fromOffset(size.X, size.Y) })
+            Apply()
             task.delay(0.12, function() if not collapsed then Body.Visible = true end end)
         end
     end)
