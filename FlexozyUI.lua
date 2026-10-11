@@ -10,7 +10,7 @@ local LP           = Players.LocalPlayer
 local WHITE, BLACK = Color3.new(1, 1, 1), Color3.new(0, 0, 0)
 local function C(r, g, b) return Color3.fromRGB(r, g, b) end
 local Flexozy = {
-    Version = "3.1.0",
+    Version = "3.2.0",
     Icons = {
         Grid     = "rbxassetid://10709752035",
         Sword    = "rbxassetid://10709818534",
@@ -171,6 +171,7 @@ local DefaultDict = {
     ["Notifications"] = "การแจ้งเตือน", ["Toggle UI key"] = "ปุ่มซ่อน/แสดง UI",
     ["Unload UI"] = "ปิด UI", ["Close and disconnect everything"] = "ปิดและตัดการเชื่อมต่อทั้งหมด",
     ["Anti-AFK"] = "กันหลุด (Anti-AFK)", ["Prevents the 20-minute idle kick"] = "กันโดนเตะเมื่อไม่ขยับ 20 นาที",
+    ["Simulates input so Roblox does not kick you for idling"] = "จำลองการกดเพื่อไม่ให้ Roblox เตะเมื่อไม่ขยับ",
     ["Auto rejoin"] = "เข้าเกมใหม่อัตโนมัติ", ["Rejoin automatically if disconnected or kicked"] = "เข้าเกมใหม่เองเมื่อหลุดหรือโดนเตะ",
     ["Auto-save"] = "เซฟอัตโนมัติ", ["Save settings automatically"] = "เซฟค่าที่ตั้งให้อัตโนมัติ",
     ["Config name"] = "ชื่อคอนฟิก",
@@ -181,6 +182,7 @@ local DefaultDict = {
     ["Profile"] = "โปรไฟล์", ["User ID"] = "ไอดีผู้ใช้", ["Account age"] = "อายุบัญชี", ["Created"] = "สร้างเมื่อ",
     ["Membership"] = "สมาชิก", ["Executor"] = "Executor", ["Place ID"] = "ไอดีแมพ", ["days"] = "วัน",
     ["Copy User ID"] = "คัดลอก User ID", ["Copied"] = "คัดลอกแล้ว", ["Unknown"] = "ไม่ทราบ",
+    ["Search..."] = "ค้นหา...", ["No results"] = "ไม่พบผลลัพธ์", ["results"] = "รายการ", ["Copy"] = "คัดลอก",
 }
 
 local function Greeting()
@@ -211,6 +213,7 @@ function Flexozy:CreateWindow(cfg)
         NotifyEnabled = true, AccentName = startName or "Violet",
         Lang = NormLang(cfg.Language), LangScope = NormScope(cfg.LanguageScope), LangFns = {}, Dict = { EN = {}, TH = {} },
         Shown = true, Listening = false, Version = Flexozy.Version, Maximized = false,
+        Index = {}, Tips = {},
     }
     local function Conn(sig, fn)
         local c = sig:Connect(fn)
@@ -513,8 +516,9 @@ function Flexozy:CreateWindow(cfg)
     local Sidebar = New("Frame", { Position = UDim2.fromOffset(10, 8), Size = UDim2.new(0, 190, 1, -18), BackgroundColor3 = T.Panel, BorderSizePixel = 0 }, Body)
     Round(Sidebar, 14)
     Stroke(Sidebar, T.Stroke, 1, 0.3)
+    local SEARCH_H = 38 -- พื้นที่ช่องค้นหาด้านบนของ Sidebar
     local Nav = New("ScrollingFrame", {
-        Position = UDim2.fromOffset(6, 6), Size = UDim2.new(1, -12, 1, -78),
+        Position = UDim2.fromOffset(6, 6 + SEARCH_H), Size = UDim2.new(1, -12, 1, -78 - SEARCH_H),
         BackgroundTransparency = 1, BorderSizePixel = 0, ScrollBarThickness = 2,
         ScrollBarImageColor3 = T.Stroke, AutomaticCanvasSize = Enum.AutomaticSize.Y, CanvasSize = UDim2.new(),
     }, Sidebar)
@@ -631,11 +635,190 @@ function Flexozy:CreateWindow(cfg)
         if not Footer then
             Footer = New("Frame", { AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 6, 1, -70), Size = UDim2.new(1, -12, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, BackgroundTransparency = 1 }, Sidebar)
             New("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 4), VerticalAlignment = Enum.VerticalAlignment.Bottom }, Footer)
-            Nav.Size = UDim2.new(1, -12, 1, -124)
+            Nav.Size = UDim2.new(1, -12, 1, -124 - SEARCH_H)
         end
         return Footer
     end
     local Content = New("Frame", { Position = UDim2.fromOffset(210, 8), Size = UDim2.new(1, -220, 1, -18), BackgroundTransparency = 1 }, Body)
+
+    -- =====================================================================
+    -- Search: ช่องค้นหาฟังก์ชันข้ามทุกแท็บ (ค้นได้ทั้งภาษาอังกฤษและไทย)
+    -- =====================================================================
+    local SearchBox = New("TextBox", {
+        Position = UDim2.fromOffset(6, 6), Size = UDim2.new(1, -12, 0, 30), BackgroundColor3 = T.Card2,
+        Text = "", PlaceholderText = "", PlaceholderColor3 = T.Muted, Font = Enum.Font.Gotham, TextSize = 11,
+        TextColor3 = T.Text, ClearTextOnFocus = false, TextXAlignment = Enum.TextXAlignment.Left,
+    }, Sidebar)
+    Round(SearchBox, 9)
+    local sbStroke = Stroke(SearchBox, T.Stroke, 1, 0.3)
+    New("UIPadding", { PaddingLeft = UDim.new(0, 10), PaddingRight = UDim.new(0, 10) }, SearchBox)
+    Loc("Search...", "ui", function(t) SearchBox.PlaceholderText = t end)
+    SearchBox.Focused:Connect(function() Tween(sbStroke, 0.15, { Color = T.Accent, Transparency = 0 }) end)
+    SearchBox.FocusLost:Connect(function() Tween(sbStroke, 0.15, { Color = T.Stroke, Transparency = 0.3 }) end)
+
+    local SearchPage = New("ScrollingFrame", {
+        Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, BorderSizePixel = 0, Visible = false,
+        ScrollBarThickness = 2, ScrollBarImageColor3 = T.Stroke, AutomaticCanvasSize = Enum.AutomaticSize.Y, CanvasSize = UDim2.new(),
+    }, Content)
+    New("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 6) }, SearchPage)
+    New("UIPadding", { PaddingRight = UDim.new(0, 6), PaddingBottom = UDim.new(0, 12) }, SearchPage)
+    local sHead = Label(SearchPage, { Size = UDim2.new(1, 0, 0, 28), Text = "", Font = Enum.Font.GothamBold, TextSize = 16, LayoutOrder = 0 })
+
+    local function Texts(raw)
+        local out = {}
+        if type(raw) == "table" then
+            if raw.EN then out[#out + 1] = tostring(raw.EN) end
+            if raw.TH then out[#out + 1] = tostring(raw.TH) end
+        else
+            raw = tostring(raw == nil and "" or raw)
+            out[1] = raw
+            local th, en = W.Dict.TH[raw], W.Dict.EN[raw]
+            if th then out[#out + 1] = th end
+            if en then out[#out + 1] = en end
+        end
+        return out
+    end
+
+    local function Flash(inst)
+        if not inst or not inst.Parent then return end
+        local st = New("UIStroke", { Color = T.Accent, Thickness = 2, Transparency = 0, ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, inst)
+        local tw = Tween(st, 1.4, { Transparency = 1 }, Enum.EasingStyle.Quad)
+        tw.Completed:Connect(function() st:Destroy() end)
+    end
+
+    local function GoTo(e)
+        e.tab:Activate()
+        if e.group and e.group.SetCollapsed then e.group:SetCollapsed(false) end
+        task.delay(0.35, function() -- รอแอนิเมชันเปลี่ยนแท็บ + จัดเลย์เอาต์เสร็จ
+            local page, inst = e.tab.Content, e.inst
+            if W.Unloaded or not inst or not inst.Parent then return end
+            local y = (inst.AbsolutePosition.Y - page.AbsolutePosition.Y) / math.max(Scale.Scale, 0.01) + page.CanvasPosition.Y - 8
+            Tween(page, 0.25, { CanvasPosition = Vector2.new(0, math.max(y, 0)) })
+            Flash(inst)
+        end)
+    end
+
+    local function Render(q)
+        for _, c in ipairs(SearchPage:GetChildren()) do
+            if c:IsA("TextButton") then c:Destroy() end
+        end
+        local total, shown = 0, 0
+        for _, e in ipairs(W.Index) do
+            if e.inst and e.inst.Parent then
+                local hit = false
+                for _, s in ipairs(Texts(e.raw)) do
+                    if s ~= "" and s:lower():find(q, 1, true) then hit = true break end
+                end
+                if hit then
+                    total += 1
+                    if shown < 40 then
+                        shown += 1
+                        local b = New("TextButton", { Size = UDim2.new(1, 0, 0, 44), BackgroundColor3 = T.Card, Text = "", AutoButtonColor = false, LayoutOrder = shown }, SearchPage)
+                        Round(b, 10)
+                        Stroke(b, T.Stroke, 1, 0.3)
+                        Interact(b)
+                        Label(b, { Position = UDim2.fromOffset(12, 6), Size = UDim2.new(1, -24, 0, 16), Text = Tr(e.raw, "func"), Font = Enum.Font.GothamBold, TextSize = 11 })
+                        local path = Tr(e.tab.Title, "tab")
+                        if e.groupTitle then path = path .. "  >  " .. Tr(e.groupTitle, "func") end
+                        Label(b, { Position = UDim2.fromOffset(12, 24), Size = UDim2.new(1, -24, 0, 14), Text = path, TextSize = 9.5, TextColor3 = T.Muted })
+                        b.MouseButton1Click:Connect(function() GoTo(e) end)
+                    end
+                end
+            end
+        end
+        sHead.Text = total > 0 and (tostring(total) .. " " .. Tr("results", "ui")) or Tr("No results", "ui")
+    end
+
+    SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
+        local q = (SearchBox.Text or ""):lower():match("^%s*(.-)%s*$")
+        if q == "" then
+            SearchPage.Visible = false
+            if W.ActiveTab then W.ActiveTab.Content.Visible = true end
+        else
+            if W.ActiveTab then W.ActiveTab.Content.Visible = false end
+            SearchPage.Visible = true
+            SearchPage.CanvasPosition = Vector2.new(0, 0)
+            Render(q)
+        end
+    end)
+    function W.ClearSearch()
+        if SearchBox.Text ~= "" then SearchBox.Text = "" end
+    end
+
+    -- =====================================================================
+    -- Tooltip: ชี้ค้างที่ตัวเลือกแล้วขึ้นคำอธิบาย (ใช้ Tooltip = "..." ในทุก element)
+    -- =====================================================================
+    local Tip = New("Frame", {
+        Size = UDim2.fromOffset(0, 0), AutomaticSize = Enum.AutomaticSize.XY, BackgroundColor3 = C(14, 14, 18),
+        BorderSizePixel = 0, Visible = false, ZIndex = 80,
+    }, Gui)
+    Round(Tip, 8)
+    local tipStroke = Stroke(Tip, T.Stroke, 1)
+    Themed(function() tipStroke.Color = T.Stroke:Lerp(T.Accent, 0.35) end)
+    New("UIPadding", { PaddingTop = UDim.new(0, 6), PaddingBottom = UDim.new(0, 6), PaddingLeft = UDim.new(0, 9), PaddingRight = UDim.new(0, 9) }, Tip)
+    local tipLbl = Label(Tip, {
+        Size = UDim2.fromOffset(0, 0), AutomaticSize = Enum.AutomaticSize.XY, Text = "", TextSize = 10,
+        TextWrapped = true, TextTruncate = Enum.TextTruncate.None, ZIndex = 81,
+    })
+    New("UISizeConstraint", { MaxSize = Vector2.new(224, math.huge) }, tipLbl)
+
+    function W:Tooltip(inst, raw)
+        if inst and raw and raw ~= "" then table.insert(W.Tips, { inst = inst, raw = raw }) end
+    end
+
+    local mousePos, hoverTip, hoverT = Vector2.new(-1, -1), nil, 0
+    local function Within(o, p)
+        local a, s = o.AbsolutePosition, o.AbsoluteSize
+        return p.X >= a.X and p.X <= a.X + s.X and p.Y >= a.Y and p.Y <= a.Y + s.Y
+    end
+    local function Reachable(o, p) -- มองเห็นจริง (ทุก parent Visible และเมาส์อยู่ในพื้นที่ scroll)
+        local x = o
+        while x and x ~= Gui do
+            if x:IsA("GuiObject") and not x.Visible then return false end
+            if x:IsA("ScrollingFrame") and not Within(x, p) then return false end
+            x = x.Parent
+        end
+        return x == Gui
+    end
+    local function FindTip(p)
+        for i = #W.Tips, 1, -1 do
+            local t = W.Tips[i]
+            if t.inst.Parent and Within(t.inst, p) and Reachable(t.inst, p) then return t end
+        end
+    end
+    local function PlaceTip()
+        local vp = workspace.CurrentCamera and workspace.CurrentCamera.ViewportSize or Vector2.new(1280, 720)
+        local s = Tip.AbsoluteSize
+        local x = math.clamp(mousePos.X + 14, 4, math.max(vp.X - s.X - 4, 4))
+        local y = mousePos.Y + 20
+        if y + s.Y > vp.Y - 4 then y = mousePos.Y - s.Y - 10 end
+        Tip.Position = UDim2.fromOffset(x, math.max(y, 4))
+    end
+    Conn(UIS.InputChanged, function(i)
+        if i.UserInputType ~= Enum.UserInputType.MouseMovement then return end
+        mousePos = Vector2.new(i.Position.X, i.Position.Y)
+        local t = FindTip(mousePos)
+        if t ~= hoverTip then
+            hoverTip, hoverT = t, tick()
+            Tip.Visible = false
+        end
+        if Tip.Visible then PlaceTip() end
+    end)
+    Conn(RunService.Heartbeat, function()
+        if hoverTip then
+            if not Tip.Visible and tick() - hoverT > 0.45 then
+                tipLbl.Text = Tr(hoverTip.raw, "func")
+                Tip.Visible = true
+                PlaceTip()
+            elseif Tip.Visible and not Reachable(hoverTip.inst, mousePos) then
+                hoverTip = nil
+                Tip.Visible = false
+            end
+        elseif Tip.Visible then
+            Tip.Visible = false
+        end
+    end)
+
     function W:Section(name)
         local f = New("Frame", { Size = UDim2.new(1, 0, 0, 28), BackgroundTransparency = 1, LayoutOrder = NextNav() }, Nav)
         local sl = Label(f, { Position = UDim2.fromOffset(10, 4), Size = UDim2.new(1, -10, 1, -4), Text = "", Font = Enum.Font.GothamMedium, TextSize = 9.5, TextColor3 = T.Muted })
@@ -693,6 +876,7 @@ function Flexozy:CreateWindow(cfg)
         end
         Tab.SetActive = SetActive
         function Tab:Activate()
+            if W.ClearSearch then W.ClearSearch() end
             for _, t in ipairs(W.Tabs) do if t ~= self then t.SetActive(false) end end
             W.ActiveTab = self
             SetActive(true)
@@ -707,7 +891,11 @@ function Flexozy:CreateWindow(cfg)
             if W.ActiveTab ~= Tab then Tween(btn, 0.15, { BackgroundTransparency = 1 }) end
         end)
         btn.MouseButton1Click:Connect(function() Tab:Activate() end)
-        function Tab:Group(gtitle, side)
+        -- Tab:Group(title, side, opts)  — side = "Left" | "Right" | nil
+        -- opts = { Collapsible = true, Collapsed = false }   (ส่งเป็น argument ที่ 2 แทน side ก็ได้: { Side = "Left", Collapsible = true })
+        function Tab:Group(gtitle, side, gopts)
+            if type(side) == "table" then gopts, side = side, side.Side end
+            gopts = gopts or {}
             local host = Page
             if side == "Left" or side == "Right" then
                 if not self._cols then
@@ -731,15 +919,41 @@ function Flexozy:CreateWindow(cfg)
             New("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 10) }, card)
             local n = 0
             local function ord() n += 1 return n end
+            local gh
+            local collapsible = gtitle ~= nil and gopts.Collapsible == true
             if gtitle then
-                local gh = New("Frame", { Size = UDim2.new(1, 0, 0, 16), BackgroundTransparency = 1, LayoutOrder = 0 }, card)
+                gh = New(collapsible and "TextButton" or "Frame",
+                    collapsible
+                        and { Size = UDim2.new(1, 0, 0, 16), BackgroundTransparency = 1, LayoutOrder = 0, Text = "", AutoButtonColor = false }
+                        or { Size = UDim2.new(1, 0, 0, 16), BackgroundTransparency = 1, LayoutOrder = 0 },
+                    card)
                 local gb = New("Frame", { Position = UDim2.fromOffset(0, 2), Size = UDim2.fromOffset(3, 12), BorderSizePixel = 0 }, gh)
                 Round(gb, 2)
                 AccentGrad(gb, 90)
-                local gl = Label(gh, { Position = UDim2.fromOffset(10, 0), Size = UDim2.new(1, -10, 1, 0), Text = "", Font = Enum.Font.GothamBold, TextSize = 12 })
+                local gl = Label(gh, { Position = UDim2.fromOffset(10, 0), Size = UDim2.new(1, -30, 1, 0), Text = "", Font = Enum.Font.GothamBold, TextSize = 12 })
                 Loc(gtitle, "func", function(t) gl.Text = t end)
             end
             local G = { Card = card }
+            local collapsed = false
+            if collapsible then
+                local arrow = Label(gh, {
+                    AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, 0, 0, 0), Size = UDim2.fromOffset(16, 16),
+                    Text = "v", TextXAlignment = Enum.TextXAlignment.Center, TextColor3 = T.Dim, Font = Enum.Font.GothamBold, TextSize = 11,
+                })
+                function G:SetCollapsed(v)
+                    collapsed = v == true
+                    for _, c in ipairs(card:GetChildren()) do
+                        if c:IsA("GuiObject") and c ~= gh then c.Visible = not collapsed end
+                    end
+                    arrow.Text = collapsed and ">" or "v"
+                end
+                card.ChildAdded:Connect(function(c)
+                    if collapsed and c:IsA("GuiObject") and c ~= gh then c.Visible = false end
+                end)
+                gh.MouseButton1Click:Connect(function() G:SetCollapsed(not collapsed) end)
+                if gopts.Collapsed then G:SetCollapsed(true) end
+            end
+            function G:IsCollapsed() return collapsed end
             function G:Label(text)
                 local l = Label(card, {
                     Size = UDim2.new(1, 0, 0, 14), AutomaticSize = Enum.AutomaticSize.Y, Text = "",
@@ -1069,7 +1283,7 @@ function Flexozy:CreateWindow(cfg)
                     if not silent and cb then task.spawn(cb, tb.Text) end
                 end
                 FlagReg(o.Flag, tb.Text, set)
-                return { Instance = tb, Set = set, Get = function() return tb.Text end }
+                return { Instance = row, Set = set, Get = function() return tb.Text end }
             end
             function G:Keybind(...)
                 local o = Opts({ "Title", "Default", "Callback", "Changed", "Flag" }, ...)
@@ -1124,6 +1338,114 @@ function Flexozy:CreateWindow(cfg)
                     end
                 end)
                 return { Instance = row, Set = set, Get = function() return key end }
+            end
+
+            -- G:Paragraph({ Title = "Changelog", Content = "ข้อความยาวๆ ..." })  หรือ G:Paragraph("Title", "Content")
+            function G:Paragraph(...)
+                local o = Opts({ "Title", "Content" }, ...)
+                local row = New("Frame", { Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, BackgroundTransparency = 1, LayoutOrder = ord() }, card)
+                New("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 4) }, row)
+                if o.Title then
+                    local tl = Label(row, { Size = UDim2.new(1, 0, 0, 16), Text = "", Font = Enum.Font.GothamBold, TextSize = 11.5, LayoutOrder = 1 })
+                    Loc(o.Title, "func", function(t) tl.Text = t end)
+                end
+                local bl = Label(row, {
+                    Size = UDim2.new(1, 0, 0, 14), AutomaticSize = Enum.AutomaticSize.Y, Text = "", TextColor3 = T.Dim,
+                    TextSize = 10.5, TextWrapped = true, TextTruncate = Enum.TextTruncate.None, LayoutOrder = 2,
+                })
+                local setC = Loc(o.Content or "", "func", function(t) bl.Text = t end)
+                return { Instance = row, Set = function(t) setC(t) end }
+            end
+
+            -- G:Code({ Title = "Credits", Content = "...", Font = Enum.Font.Code })  กล่องข้อความ + ปุ่มคัดลอก
+            function G:Code(...)
+                local o = Opts({ "Title", "Content" }, ...)
+                local box = New("Frame", { Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, BackgroundColor3 = C(16, 16, 20), BorderSizePixel = 0, LayoutOrder = ord() }, card)
+                Round(box, 9)
+                Stroke(box, T.Stroke, 1, 0.3)
+                New("UIPadding", { PaddingTop = UDim.new(0, 8), PaddingBottom = UDim.new(0, 10), PaddingLeft = UDim.new(0, 10), PaddingRight = UDim.new(0, 10) }, box)
+                New("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 6) }, box)
+                local bar = New("Frame", { Size = UDim2.new(1, 0, 0, 22), BackgroundTransparency = 1, LayoutOrder = 1 }, box)
+                local tl = Label(bar, { Size = UDim2.new(1, -64, 1, 0), Text = "", Font = Enum.Font.GothamBold, TextSize = 10.5, TextColor3 = T.Dim })
+                Loc(o.Title or "", "func", function(t) tl.Text = t end)
+                local cbtn = New("TextButton", { AnchorPoint = Vector2.new(1, 0), Position = UDim2.fromScale(1, 0), Size = UDim2.fromOffset(58, 22), BackgroundColor3 = T.Card2, Text = "", AutoButtonColor = false }, bar)
+                Round(cbtn, 6)
+                Stroke(cbtn, T.Stroke, 1, 0.3)
+                Interact(cbtn)
+                local cl = Label(cbtn, { Size = UDim2.fromScale(1, 1), Text = "", TextXAlignment = Enum.TextXAlignment.Center, Font = Enum.Font.GothamBold, TextSize = 9.5 })
+                local copied = false
+                local function copyText() cl.Text = Tr(copied and "Copied" or "Copy", "func") end
+                copyText()
+                table.insert(W.LangFns, copyText)
+                local body = Label(box, {
+                    Size = UDim2.new(1, 0, 0, 14), AutomaticSize = Enum.AutomaticSize.Y, Text = "", TextColor3 = T.Text,
+                    Font = o.Font or Enum.Font.Code, TextSize = 10.5, TextWrapped = true,
+                    TextTruncate = Enum.TextTruncate.None, LayoutOrder = 2,
+                })
+                local current = ""
+                local setC = Loc(o.Content or "", "func", function(t) current = t body.Text = t end)
+                cbtn.MouseButton1Click:Connect(function()
+                    local fn = setclipboard or toclipboard
+                    if fn and pcall(fn, current) then
+                        copied = true
+                        copyText()
+                        task.delay(1.2, function() copied = false if cbtn.Parent then copyText() end end)
+                    else
+                        W:Notify({ Title = "Copy", Content = "executor ไม่รองรับ setclipboard", Type = "Error", Force = true })
+                    end
+                end)
+                return { Instance = box, Set = function(t) setC(t) end, Get = function() return current end }
+            end
+
+            -- G:Progress({ Title = "Farming", Min = 0, Max = 100, Default = 0, Percent = true, Suffix = "items" })
+            -- Percent = true (ค่าเริ่มต้น) แสดง %, Percent = false แสดง "ค่า Suffix"
+            function G:Progress(...)
+                local o = Opts({ "Title", "Min", "Max", "Default", "Suffix", "Percent" }, ...)
+                local min, max = o.Min or 0, o.Max or 100
+                local val = math.clamp(o.Default or min, min, max)
+                local row = New("Frame", { Size = UDim2.new(1, 0, 0, 36), BackgroundTransparency = 1, LayoutOrder = ord() }, card)
+                local tl = Label(row, { Size = UDim2.new(1, -90, 0, 16), Text = "", Font = Enum.Font.GothamMedium, TextSize = 11.5 })
+                local setTl = Loc(o.Title or "Progress", "func", function(t) tl.Text = t end)
+                local vl = Label(row, { Position = UDim2.new(1, -90, 0, 0), Size = UDim2.fromOffset(90, 16), TextXAlignment = Enum.TextXAlignment.Right, Font = Enum.Font.GothamBold, TextSize = 10.5, TextColor3 = T.Accent })
+                Themed(function() vl.TextColor3 = T.Accent end)
+                local track = New("Frame", { Position = UDim2.fromOffset(0, 24), Size = UDim2.new(1, 0, 0, 8), BackgroundColor3 = T.Card2, BorderSizePixel = 0 }, row)
+                Round(track, 4)
+                local fill = New("Frame", { Size = UDim2.fromScale(0, 1), BorderSizePixel = 0 }, track)
+                Round(fill, 4)
+                AccentGrad(fill, 0)
+                local function ratio() return (val - min) / math.max(max - min, 1e-9) end
+                local function text()
+                    if o.Percent == false then
+                        return string.format("%g", val) .. ((o.Suffix and o.Suffix ~= "") and (" " .. o.Suffix) or "")
+                    end
+                    return string.format("%d%%", math.floor(ratio() * 100 + 0.5))
+                end
+                fill.Size = UDim2.fromScale(ratio(), 1)
+                vl.Text = text()
+                local function set(v)
+                    val = math.clamp(tonumber(v) or val, min, max)
+                    Tween(fill, 0.25, { Size = UDim2.fromScale(ratio(), 1) })
+                    vl.Text = text()
+                end
+                return { Instance = row, Set = set, Get = function() return val end, SetTitle = function(t) setTl(t) end }
+            end
+
+            -- ลงทะเบียนทุก element เข้า Search + ใส่ Tooltip (ใช้ Tooltip = "..." ใน options ของ element ไหนก็ได้)
+            for _, nm in ipairs({ "Toggle", "Slider", "Dropdown", "Button", "Input", "Keybind", "Paragraph", "Code", "Progress" }) do
+                local orig = G[nm]
+                G[nm] = function(self, ...)
+                    local r = orig(self, ...)
+                    local first = ...
+                    local opt = type(first) == "table" and first or {}
+                    local raw = type(first) == "table" and first.Title or first
+                    if type(r) == "table" and r.Instance then
+                        if raw ~= nil and raw ~= "" then
+                            table.insert(W.Index, { raw = raw, inst = r.Instance, tab = Tab, group = G, groupTitle = gtitle })
+                        end
+                        if opt.Tooltip then W:Tooltip(r.Instance, opt.Tooltip) end
+                    end
+                    return r
+                end
             end
             return G
         end
@@ -1302,6 +1624,7 @@ function Flexozy:CreateWindow(cfg)
         local pr = tab:Group("Protection", "Right")
         pr:Toggle({
             Title = "Anti-AFK", Desc = "Prevents the 20-minute idle kick", Default = true, Flag = "UI.AntiAfk",
+            Tooltip = "Simulates input so Roblox does not kick you for idling",
             Callback = function(v) W:SetAntiAfk(v) end,
         })
         pr:Toggle({
@@ -1310,7 +1633,7 @@ function Flexozy:CreateWindow(cfg)
         })
         W:SetAntiAfk(true)
 
-        local cf = tab:Group("Config", "Right")
+        local cf = tab:Group("Config", "Right", { Collapsible = true })
         cf:Toggle({
             Title = "Auto-save", Desc = "Save settings automatically", Default = W.AutoSave, Flag = "UI.AutoSave",
             Callback = function(v) W.AutoSave = v end,
@@ -1423,6 +1746,7 @@ function Flexozy:CreateWindow(cfg)
         else
             SetProfile(false)
             W._ddOpen = nil
+            Tip.Visible = false
             Tween(Scale, 0.18, { Scale = target * 0.88 }, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
             task.delay(0.18, function()
                 if W._tok == tok and Gui.Parent then
@@ -1491,6 +1815,8 @@ function Flexozy:CreateWindow(cfg)
         table.clear(W.Conns)
         table.clear(W.Updaters)
         table.clear(W.ThemeFns)
+        table.clear(W.Index)
+        table.clear(W.Tips)
         if cfg.OnUnload then pcall(cfg.OnUnload) end
         if Gui then Gui:Destroy() end
     end
