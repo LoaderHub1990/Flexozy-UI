@@ -10,7 +10,7 @@ local LP           = Players.LocalPlayer
 local WHITE, BLACK = Color3.new(1, 1, 1), Color3.new(0, 0, 0)
 local function C(r, g, b) return Color3.fromRGB(r, g, b) end
 local Flexozy = {
-    Version = "3.2.0",
+    Version = "3.3.0",
     Icons = {
         Grid     = "rbxassetid://10709752035",
         Sword    = "rbxassetid://10709818534",
@@ -587,20 +587,6 @@ function Flexozy:CreateWindow(cfg)
     InfoRow(7, "Place ID", function() return tostring(game.PlaceId) end)
     InfoRow(8, "Executor", execText)
 
-    local copyBtn = New("TextButton", { Size = UDim2.new(1, 0, 0, 28), BackgroundColor3 = T.Card2, Text = "", AutoButtonColor = false, LayoutOrder = 9 }, Pop)
-    Round(copyBtn, 8)
-    Stroke(copyBtn, T.Stroke, 1, 0.3)
-    Interact(copyBtn)
-    local copyLbl = Label(copyBtn, { Size = UDim2.fromScale(1, 1), Text = "", TextXAlignment = Enum.TextXAlignment.Center, Font = Enum.Font.GothamBold, TextSize = 10.5 })
-    Loc("Copy User ID", "ui", function(t) copyLbl.Text = t end)
-    copyBtn.MouseButton1Click:Connect(function()
-        local fn = setclipboard or toclipboard
-        if fn and pcall(fn, tostring(LP.UserId)) then
-            W:Notify({ Title = "Profile", Content = "Copied", Type = "Success", Force = true })
-        else
-            W:Notify({ Title = "Profile", Content = "executor ไม่รองรับ setclipboard", Type = "Error", Force = true })
-        end
-    end)
 
     local popOpen, popTok = false, 0
     local function SetProfile(on)
@@ -1554,6 +1540,153 @@ function Flexozy:CreateWindow(cfg)
             for i, b in ipairs(bars) do
                 b.Size = UDim2.new(1 / N, -2, math.clamp(hist[i] / mxv, 0.04, 1), 0)
             end
+        end)
+    end
+    -- =====================================================================
+    -- Discord widget: ไอคอน/ชื่อเซิร์ฟเวอร์ + จำนวนออนไลน์/ออฟไลน์/สมาชิก (รีเฟรชอัตโนมัติ)
+    -- ใช้: W:BuildDiscord(tab, "https://discord.gg/xxxx")  หรือ  W:BuildDiscord(tab, { Invite = "xxxx", Refresh = 60 })
+    -- =====================================================================
+    function W:BuildDiscord(tab, dcfg)
+        if type(dcfg) == "string" then dcfg = { Invite = dcfg } end
+        dcfg = dcfg or {}
+        local code = tostring(dcfg.Invite or ""):match("([%w%-_]+)/*$")
+        if not code then return end
+        local interval = math.max(tonumber(dcfg.Refresh) or 60, 30)
+        local link = "https://discord.gg/" .. code
+        W:AddTranslations({
+            ["Online"] = "ออนไลน์", ["Offline"] = "ออฟไลน์", ["Members"] = "สมาชิก", ["Join"] = "เข้าร่วม",
+            ["Updated"] = "อัปเดต", ["Discord unavailable"] = "ดึงข้อมูล Discord ไม่ได้",
+            ["Invite link copied"] = "คัดลอกลิงก์เชิญแล้ว", ["Opening in Discord"] = "กำลังเปิดใน Discord",
+        })
+
+        local card = New("Frame", {
+            Size = UDim2.new(1, 0, 0, 134), BackgroundColor3 = T.Card, BorderSizePixel = 0,
+            ClipsDescendants = true, LayoutOrder = tab:_ord(),
+        }, tab.Content)
+        Round(card, 14)
+        Stroke(card, T.Stroke, 1, 0.3)
+
+        local iconHost = New("Frame", { Position = UDim2.fromOffset(16, 16), Size = UDim2.fromOffset(60, 60), BackgroundColor3 = T.Card2, BorderSizePixel = 0 }, card)
+        Round(iconHost, 16)
+        local initial = Label(iconHost, { Size = UDim2.fromScale(1, 1), Text = "D", Font = Enum.Font.GothamBold, TextSize = 22, TextXAlignment = Enum.TextXAlignment.Center, TextColor3 = T.Dim })
+        local nameL = Label(card, { Position = UDim2.fromOffset(88, 22), Size = UDim2.new(1, -200, 0, 20), Text = "Discord", Font = Enum.Font.GothamBold, TextSize = 14 })
+        Label(card, { Position = UDim2.fromOffset(88, 44), Size = UDim2.new(1, -200, 0, 14), Text = "discord.gg/" .. code, TextSize = 10, TextColor3 = T.Muted })
+
+        local joinB = New("TextButton", {
+            AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -16, 0, 18), Size = UDim2.fromOffset(84, 28),
+            BorderSizePixel = 0, Text = "", AutoButtonColor = false,
+        }, card)
+        Round(joinB, 9)
+        AccentGrad(joinB, 45)
+        Interact(joinB)
+        local jl = Label(joinB, { Size = UDim2.fromScale(1, 1), Text = "", TextXAlignment = Enum.TextXAlignment.Center, Font = Enum.Font.GothamBold, TextSize = 11, TextColor3 = WHITE })
+        Loc("Join", "func", function(t) jl.Text = t end)
+
+        local row = New("Frame", { Position = UDim2.fromOffset(16, 88), Size = UDim2.new(1, -32, 0, 16), BackgroundTransparency = 1 }, card)
+        New("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 16), VerticalAlignment = Enum.VerticalAlignment.Center, SortOrder = Enum.SortOrder.LayoutOrder }, row)
+        local function stat(order)
+            return Label(row, {
+                Size = UDim2.fromOffset(0, 16), AutomaticSize = Enum.AutomaticSize.X, Text = "", RichText = true,
+                TextSize = 10.5, TextColor3 = T.Dim, TextTruncate = Enum.TextTruncate.None, LayoutOrder = order,
+            })
+        end
+        local lOn, lOff, lAll = stat(1), stat(2), stat(3)
+        local lUp = Label(card, { AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -16, 0, 88), Size = UDim2.fromOffset(90, 16), TextXAlignment = Enum.TextXAlignment.Right, Text = "", TextSize = 9, TextColor3 = T.Muted })
+
+        local track = New("Frame", { Position = UDim2.fromOffset(16, 114), Size = UDim2.new(1, -32, 0, 6), BackgroundColor3 = T.Card2, BorderSizePixel = 0 }, card)
+        Round(track, 3)
+        local fill = New("Frame", { Size = UDim2.fromScale(0, 1), BackgroundColor3 = T.Ok, BorderSizePixel = 0 }, track)
+        Round(fill, 3)
+
+        local info, failed, iconShown = nil, false, nil
+        local function fmt(n)
+            local s = tostring(math.floor(tonumber(n) or 0))
+            local r = s:reverse():gsub("(%d%d%d)", "%1,"):reverse()
+            return (r:gsub("^,", ""))
+        end
+        local function render()
+            if info then
+                local ok, off, dim = Hex(T.Ok), Hex(T.Muted), Hex(T.Dim)
+                lOn.Text  = ('<font color="%s">●</font> %s <b>%s</b>'):format(ok, Tr("Online", "func"), fmt(info.online))
+                lOff.Text = ('<font color="%s">●</font> %s <b>%s</b>'):format(off, Tr("Offline", "func"), fmt(math.max(info.total - info.online, 0)))
+                lAll.Text = ('<font color="%s">●</font> %s <b>%s</b>'):format(dim, Tr("Members", "func"), fmt(info.total))
+                lUp.Text = Tr("Updated", "func") .. " " .. info.at
+                nameL.Text = info.name
+                local r = info.total > 0 and math.clamp(info.online / info.total, 0, 1) or 0
+                Tween(fill, 0.5, { Size = UDim2.fromScale(r, 1) })
+            elseif failed then
+                lOn.Text, lOff.Text, lAll.Text, lUp.Text = Tr("Discord unavailable", "func"), "", "", ""
+            else
+                lOn.Text, lOff.Text, lAll.Text, lUp.Text = "Loading...", "", "", ""
+            end
+        end
+        render()
+        table.insert(W.LangFns, render)
+        Themed(function() Tween(fill, 0.01, { BackgroundColor3 = T.Ok }) end)
+
+        local function httpGet(url)
+            local ok, body = pcall(function() return game:HttpGet(url) end)
+            if ok and type(body) == "string" and body ~= "" then return body end
+            local req = (syn and syn.request) or http_request or request or (fluxus and fluxus.request)
+            if req then
+                local ok2, res = pcall(req, { Url = url, Method = "GET" })
+                if ok2 and type(res) == "table" and res.Body and (res.StatusCode or 200) < 400 then return res.Body end
+            end
+        end
+        local function refresh()
+            local body = httpGet("https://discord.com/api/v10/invites/" .. code .. "?with_counts=true")
+            local ok, data = pcall(function() return HttpService:JSONDecode(body) end)
+            if ok and type(data) == "table" and type(data.guild) == "table" then
+                local g, p = data.guild, (type(data.profile) == "table" and data.profile or {})
+                info = {
+                    name = g.name or "Discord",
+                    online = tonumber(data.approximate_presence_count) or tonumber(p.online_count) or 0,
+                    total = tonumber(data.approximate_member_count) or tonumber(p.member_count) or 0,
+                    at = os.date("%H:%M"),
+                }
+                failed = false
+                if g.id and g.icon and iconShown ~= g.icon then
+                    iconShown = g.icon
+                    ApplyLogo(iconHost, function() initial.Visible = false end,
+                        ("https://cdn.discordapp.com/icons/%s/%s.png?size=128"):format(g.id, g.icon), 0)
+                end
+            else
+                failed = info == nil
+            end
+        end
+        task.spawn(function()
+            while card.Parent and not W.Unloaded do
+                refresh()
+                render()
+                task.wait(failed and 15 or interval)
+            end
+        end)
+
+        joinB.MouseButton1Click:Connect(function()
+            task.spawn(function()
+                local req = (syn and syn.request) or http_request or request or (fluxus and fluxus.request)
+                local opened = false
+                if req then
+                    opened = pcall(function()
+                        local r = req({
+                            Url = "http://127.0.0.1:6463/rpc?v=1", Method = "POST",
+                            Headers = { ["Content-Type"] = "application/json", Origin = "https://discord.com" },
+                            Body = HttpService:JSONEncode({ cmd = "INVITE_BROWSER", args = { code = code }, nonce = HttpService:GenerateGUID(false) }),
+                        })
+                        if type(r) == "table" and r.StatusCode and r.StatusCode >= 400 then error("rpc failed") end
+                    end)
+                end
+                if opened then
+                    W:Notify({ Title = "Discord", Content = "Opening in Discord", Type = "Success", Force = true })
+                    return
+                end
+                local fn = setclipboard or toclipboard
+                if fn and pcall(fn, link) then
+                    W:Notify({ Title = "Discord", Content = "Invite link copied", Type = "Success", Force = true })
+                else
+                    W:Notify({ Title = "Discord", Content = link, Force = true, Duration = 6 })
+                end
+            end)
         end)
     end
     function W:BuildSettings(tab)
