@@ -175,7 +175,7 @@ local DefaultDict = {
     ["All = everything, Tabs = tab names only, Functions = features only"] = "ทั้งหมด = ทุกอย่าง, แท็บ = เฉพาะชื่อแท็บ, ฟังก์ชัน = เฉพาะตัวเลือกฟีเจอร์",
     ["Toggle key"] = "ปุ่มซ่อน/แสดง",
     ["Show FPS / MS pill"] = "แสดงแถบ FPS / MS", ["FPS and ping bar at the top of the screen (click it to open/close the menu)"] = "แถบ FPS และ Ping ด้านบนจอ (กดเพื่อเปิด/ปิดเมนู)",
-    ["Open"] = "เปิด",
+    ["Open"] = "เปิด", ["Update available"] = "มีเวอร์ชันใหม่",
     ["Notifications"] = "การแจ้งเตือน", ["Toggle UI key"] = "ปุ่มซ่อน/แสดง UI",
     ["Unload UI"] = "ปิด UI", ["Close and disconnect everything"] = "ปิดและตัดการเชื่อมต่อทั้งหมด",
     ["Anti-AFK"] = "กันหลุด (Anti-AFK)", ["Prevents the 20-minute idle kick"] = "กันโดนเตะเมื่อไม่ขยับ 20 นาที",
@@ -2387,7 +2387,7 @@ function Flexozy:CreateWindow(cfg)
         Size = UDim2.fromScale(1, 1), TextXAlignment = Enum.TextXAlignment.Center, Font = Enum.Font.GothamBold,
         TextSize = 13, TextColor3 = WHITE, TextTruncate = Enum.TextTruncate.None, Text = "", ZIndex = 52,
     })
-    Loc("Open", "func", function(t) chipTxt.Text = t .. " +" end)
+    Loc("Open", "func", function(t) chipTxt.Text = t end)
     Themed(function() pillStroke.Color = W.Shown and T.Stroke or T.Accent end)
     W.StatsPill = pill
     W._pillPref = cfg.StatsPill ~= false
@@ -2414,11 +2414,36 @@ function Flexozy:CreateWindow(cfg)
             frames, acc = 0, 0
             local ok, ping = pcall(function() return math.floor(Stats.Network.ServerStatsItem["Data Ping"]:GetValue()) end)
             ping = ok and ping or nil
-            local hx = Hex(T.Accent:Lerp(WHITE, 0.3))
-            pillTxt.Text = ('<font color="%s"><b>%d</b></font> <font color="#d0d3de">FPS</font>   <font color="#6b6e7c">|</font>   <font color="%s"><b>%s</b></font> <font color="#d0d3de">MS</font>'):format(hx, fps, hx, ping and tostring(ping) or "-")
+            local base = T.Accent:Lerp(WHITE, 0.3)
+            local fpsCol = fps < 25 and T.Danger or (fps < 45 and T.Warn or base)
+            local pingCol = (not ping) and base or (ping > 150 and T.Danger or (ping > 90 and T.Warn or base))
+            local hx, hp = Hex(fpsCol), Hex(pingCol)
+            pillTxt.Text = ('<font color="%s"><b>%d</b></font> <font color="#d0d3de">FPS</font>   <font color="#6b6e7c">|</font>   <font color="%s"><b>%s</b></font> <font color="#d0d3de">MS</font>'):format(hx, fps, hp, ping and tostring(ping) or "-")
             for _, fn in ipairs(W.Updaters) do pcall(fn, fps, ping) end
         end
     end)
+    function W:CheckUpdate(url, current)
+        url = url or cfg.UpdateUrl
+        if not url or url == "" then return end
+        task.spawn(function()
+            local ok, body = pcall(function() return game:HttpGet(url) end)
+            if not ok or type(body) ~= "string" then return end
+            local latest = body:match("%d+%.%d+%.%d+")
+            current = current or cfg.ScriptVersion or Flexozy.Version
+            if not latest or W.Unloaded then return end
+            local function num(v)
+                local a, b, c = v:match("(%d+)%.(%d+)%.(%d+)")
+                return (tonumber(a) or 0) * 1e6 + (tonumber(b) or 0) * 1e3 + (tonumber(c) or 0)
+            end
+            if num(latest) > num(current) then
+                W:Notify({
+                    Title = "Update available", Content = "v" .. current .. " -> v" .. latest,
+                    Force = true, Duration = 8,
+                })
+            end
+        end)
+    end
+    if cfg.UpdateUrl then W:CheckUpdate(cfg.UpdateUrl) end
     Conn(UIS.InputBegan, function(i, gpe)
         if gpe or W.Listening then return end
         if i.UserInputType == Enum.UserInputType.Keyboard and W.Key ~= Enum.KeyCode.Unknown and i.KeyCode == W.Key then
