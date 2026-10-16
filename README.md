@@ -1,339 +1,1101 @@
 # Flexozy UI
 
-ไลบรารี UI สำหรับ Roblox (Luau) สไตล์ดาร์ก มีแอนิเมชัน ปรับธีมได้ และมีหมวด Settings พร้อมใช้ (ปรับขนาด UI, เปลี่ยนสี, ปุ่มลัด, เซฟคอนฟิก)
+**A modern, customizable Roblox Lua UI library.**
 
-- **Version:** 3.0.0
-- **ไฟล์หลัก:** `FlexozyUI.lua`
-- **ตัวอย่างครบทุกคอมโพเนนต์:** `Flexozy_Example.lua`
+Flexozy UI is a customizable interface library featuring animated UI elements, tabs, groups, interactive controls, theme customization, language support, notifications, and configuration management.
+
+[![Version](https://img.shields.io/badge/version-3.3.0-8B5CF6?style=for-the-badge)](https://github.com/LoaderHub1990/Flexozy-UI)
+[![Language](https://img.shields.io/badge/language-Lua-2563EB?style=for-the-badge)](https://www.lua.org/)
+[![Platform](https://img.shields.io/badge/platform-Roblox-111827?style=for-the-badge)](https://www.roblox.com/)
+
+## Table of Contents
+
+- [Features](#features)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [CreateWindow](#createwindow)
+- [Window Configuration](#window-configuration)
+- [Tabs](#tabs)
+- [Groups](#groups)
+- [UI Controls](#ui-controls)
+- [Callbacks and Flags](#callbacks-and-flags)
+- [Theme and Appearance](#theme-and-appearance)
+- [Language System](#language-system)
+- [Notifications](#notifications)
+- [Configuration Management](#configuration-management)
+- [Window Methods](#window-methods)
+- [Built-in Settings](#built-in-settings)
+- [Compatibility](#compatibility)
+- [License](#license)
 
 ---
 
-## ฟีเจอร์
+## Features
 
-| ฟีเจอร์ | รายละเอียด |
-|---|---|
-| คอมโพเนนต์ | Toggle, Slider (ทศนิยมได้), Dropdown (เลือกอันเดียว / หลายอัน), Button, Input, Keybind, Label, Divider |
-| หมวด Settings สำเร็จรูป | `Win:BuildSettings(tab)` บรรทัดเดียวได้ครบ |
-| ปรับขนาด UI | 25% – 200% + ย่ออัตโนมัติเมื่อจอเล็ก (Auto-fit) |
-| ธีมสี | 8 สี สลับได้ทันทีโดยไม่ต้องรีโหลด |
-| เซฟ / โหลดคอนฟิก | บันทึกลงไฟล์ผ่าน `writefile` (ตั้ง `Flag` ให้คอมโพเนนต์แล้วเซฟอัตโนมัติ) |
-| แจ้งเตือน | 4 ชนิด (Info / Success / Warning / Error) ซ้อนได้หลายอัน |
-| อื่นๆ | ปุ่มลอยเปิด/ปิดเมนู (ลากได้), แถบ FPS/MS, หน้า Home แสดงข้อมูลเซิร์ฟ, รองรับมือถือ |
+- Modern dark UI with animated gradients and glowing borders
+- Draggable windows
+- Responsive scaling and automatic screen fitting
+- Tabs with icons and subtitles
+- Left/right group layouts
+- Collapsible groups
+- Interactive UI controls
+- Custom accent colors
+- English and Thai language support
+- Translation dictionaries
+- Searchable UI elements
+- Tooltips
+- Notification system
+- Configuration save/load support
+- FPS and ping display
+- Keyboard shortcuts
+- Anti-AFK option
+- Automatic rejoin option
+- UI unload and connection cleanup
 
----
+## Installation
 
-## วิธีอัปขึ้น GitHub แล้วใช้งาน
-
-1. สร้าง Repository ใหม่บน GitHub (ตั้งเป็น **Public**)
-2. อัปโหลดไฟล์ `FlexozyUI.lua`, `Flexozy_Example.lua`, `README.md`
-3. เปิดไฟล์ `FlexozyUI.lua` บน GitHub → กดปุ่ม **Raw** → คัดลอกลิงก์ที่ได้ (หน้าตาแบบนี้)
-
-```
-https://raw.githubusercontent.com/LoaderHub1990/Flexozy-UI/refs/heads/main/FlexozyUI.lua
-```
-
-4. นำลิงก์ไปใส่ในสคริปต์ของคุณ
+Load the library from the official repository source:
 
 ```lua
-local Flexozy = loadstring(game:HttpGet("https://raw.githubusercontent.com/LoaderHub1990/Flexozy-UI/refs/heads/main/FlexozyUI.lua"))()
+local Flexozy = loadstring(game:HttpGet(
+    "https://raw.githubusercontent.com/LoaderHub1990/Flexozy-UI/refs/heads/main/FlexozyUI.lua"
+))()
 ```
 
-> ถ้าไม่อยากใช้ GitHub: วาง `FlexozyUI.lua` ในโฟลเดอร์ workspace ของ executor แล้วใช้
-> `loadstring(readfile("FlexozyUI.lua"))()`
+The library requires an environment capable of loading the source as Lua code. Some optional features rely on environment-specific APIs.
 
----
-
-## เริ่มต้นใช้งานเร็ว
+## Quick Start
 
 ```lua
-local Flexozy = loadstring(game:HttpGet("https://raw.githubusercontent.com/LoaderHub1990/Flexozy-UI/refs/heads/main/FlexozyUI.lua"))()
+local Flexozy = loadstring(game:HttpGet(
+    "https://raw.githubusercontent.com/LoaderHub1990/Flexozy-UI/refs/heads/main/FlexozyUI.lua"
+))()
 
-local Win = Flexozy:CreateWindow({
-    Title    = "Flexozy",
-    SubTitle = "My Script Hub",
+local Window = Flexozy:CreateWindow({
+    Title = "Flexozy Hub",
+    SubTitle = "Welcome to Flexozy",
+    Monogram = "FX",
+    Accent = "Violet",
+    ToggleKey = Enum.KeyCode.RightControl,
+    Language = "EN",
 })
 
-Win:Section("Main")
-local Home = Win:Tab({ Title = "Home", Subtitle = "Overview", Icon = Flexozy.Icons.Grid })
-Win:BuildHome(Home)
+local MainTab = Window:Tab({
+    Title = "Main",
+    Subtitle = "Main Features",
+    Icon = "Grid",
+})
 
-local Farm = Win:Tab({ Title = "Farm", Subtitle = "Auto farm", Icon = Flexozy.Icons.Sword })
-local g = Farm:Group("Settings", "Left")
-g:Toggle("Auto Farm", "เปิด/ปิดฟาร์ม", false, function(on)
-    print("Auto Farm:", on)
-end)
+local MainGroup = MainTab:Group("General")
 
-Win:Section("Extra")
-local Set = Win:Tab({ Title = "Settings", Subtitle = "Interface options", Icon = Flexozy.Icons.Settings })
-Win:BuildSettings(Set)
+MainGroup:Button({
+    Title = "Test Button",
+    Desc = "Click to run an action",
+    Callback = function()
+        Window:Notify({
+            Title = "Flexozy",
+            Content = "Button clicked successfully!",
+            Type = "Success",
+            Duration = 3,
+        })
+    end,
+})
 
-Win:LoadConfig()   -- บรรทัดสุดท้ายเสมอ
+MainGroup:Toggle({
+    Title = "Example Toggle",
+    Desc = "Enable or disable a feature",
+    Default = false,
+    Flag = "Main.ExampleToggle",
+    Callback = function(value)
+        print("Enabled:", value)
+    end,
+})
 ```
 
 ---
 
 ## CreateWindow
 
+Create a new Flexozy UI window.
+
 ```lua
-local Win = Flexozy:CreateWindow({
-    Title      = "Flexozy",                    -- ชื่อบนหัวหน้าต่าง
-    SubTitle   = "Script Hub",                 -- ข้อความรอง
-    Monogram   = "FX",                         -- ตัวอักษรในโลโก้ + ปุ่มลอย
-    Size       = Vector2.new(720, 520),
-    ToggleKey  = Enum.KeyCode.RightControl,    -- ปุ่มซ่อน/แสดง (เปลี่ยนได้ใน Settings)
-    StatsPill  = true,                         -- แถบ FPS / MS
-    Accent     = "Violet",                     -- Violet Blue Cyan Green Yellow Orange Red Pink หรือ Color3
-    ConfigName = "default",                    -- ไฟล์คอนฟิก: Flexozy/default.json
-    Folder     = "Flexozy",                    -- โฟลเดอร์เก็บคอนฟิก
-    AutoSave   = true,
-    OnUnload   = function() end,               -- เรียกตอน Unload
+local Window = Flexozy:CreateWindow({
+    Title = "My Script",
+    SubTitle = "Powered by Flexozy",
+    Monogram = "FX",
+    Size = Vector2.new(720, 520),
+    Accent = "Violet",
+    ToggleKey = Enum.KeyCode.RightControl,
+    Language = "EN",
+    LanguageScope = "All",
+    AutoSave = true,
+    ConfigName = "default",
+    Folder = "Flexozy",
+    StatsPill = true,
 })
 ```
 
-## เมธอดของหน้าต่าง (`Win`)
+### Window Configuration
 
-| เมธอด | ทำอะไร |
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `Title` | string | `"Flexozy"` | Main window title |
+| `SubTitle` | string | `"Script Hub"` | Secondary title displayed under the main title |
+| `Monogram` | string | `"FX"` | Short text displayed in the logo area when no custom logo is loaded |
+| `Logo` | number/string | `nil` | Optional image asset ID, supported asset URI, or image URL where the environment supports it |
+| `Size` | Vector2 | `Vector2.new(720, 520)` | Initial window dimensions |
+| `Accent` | string/Color3 | `"Violet"` | Accent theme color |
+| `ToggleKey` | Enum.KeyCode | `RightControl` | Keyboard key used to show or hide the window |
+| `Language` | string | `"EN"` | Initial language |
+| `LanguageScope` | string | `"All"` | Translation scope |
+| `AutoSave` | boolean | `true` | Enables automatic configuration saving behavior |
+| `ConfigName` | string | `"default"` | Default configuration filename without the extension |
+| `Folder` | string | `"Flexozy"` | Folder used for configuration files |
+| `StatsPill` | boolean | `true` | Initial preference for the FPS/ping pill |
+
+### Parameter Details
+
+#### `Title`
+
+Sets the main title.
+
+```lua
+Title = "Flexozy Hub"
+```
+
+#### `SubTitle`
+
+Sets the secondary title.
+
+```lua
+SubTitle = "Premium Script Hub"
+```
+
+#### `Monogram`
+
+Sets the fallback logo text.
+
+```lua
+Monogram = "FX"
+```
+
+#### `Logo`
+
+Supports a numeric asset ID, a numeric string, or supported asset URIs. HTTP(S) image URLs depend on filesystem and custom-asset support.
+
+```lua
+Logo = 135253158468501
+```
+
+#### `Size`
+
+Controls the initial width and height.
+
+```lua
+Size = Vector2.new(720, 520)
+```
+
+The automatic fitting system can reduce the displayed scale on smaller screens.
+
+#### `Accent`
+
+Selects a built-in theme color or a custom Roblox `Color3`.
+
+```lua
+Accent = "Blue"
+```
+
+Custom color:
+
+```lua
+Accent = Color3.fromRGB(59, 130, 246)
+```
+
+Built-in colors:
+
+- `Violet`
+- `Blue`
+- `Cyan`
+- `Green`
+- `Yellow`
+- `Orange`
+- `Red`
+- `Pink`
+
+#### `ToggleKey`
+
+Defines the keyboard shortcut for the UI.
+
+```lua
+ToggleKey = Enum.KeyCode.RightControl
+```
+
+#### `Language`
+
+Sets the initial language.
+
+```lua
+Language = "EN"
+```
+
+Supported values include `EN`, `TH`, `English`, `ไทย`, and `Thai`.
+
+#### `LanguageScope`
+
+Controls which strings are translated.
+
+| Value | Description |
 |---|---|
-| `Win:Section("ชื่อ")` | หัวข้อคั่นในแถบข้าง |
-| `Win:Tab({Title, Subtitle, Icon})` | สร้างแท็บ |
-| `Win:BuildHome(tab)` | สร้างหน้า Home (ข้อมูลเกม/เซิร์ฟ/FPS) |
-| `Win:BuildSettings(tab)` | สร้างหมวด Settings ครบชุด |
-| `Win:Select("ชื่อแท็บ")` | สลับไปแท็บนั้น |
-| `Win:Notify({...})` | แจ้งเตือน |
-| `Win:Toggle(true/false)` | แสดง / ซ่อนหน้าต่าง (ไม่ใส่ค่า = สลับ) |
-| `Win:SetUIScale(1.5)` | ปรับขนาด UI (0.25 – 3) |
-| `Win:SetAccent("Blue")` | เปลี่ยนสีธีม (ชื่อหรือ `Color3`) |
-| `Win:SetOpacity(0.9)` | ความทึบของหน้าต่าง |
-| `Win:SaveConfig()` | บันทึกคอนฟิกทันที |
-| `Win:LoadConfig()` | โหลดคอนฟิก + เปิดเซฟอัตโนมัติ |
-| `Win:ResetSettings()` | คืนค่าหมวด UI เป็นค่าเริ่มต้น |
-| `Win:Unload()` | ปิด UI และตัดการเชื่อมต่อทั้งหมด |
+| `"All"` | Translate supported UI text and features |
+| `"Tabs"` | Translate tab-related text |
+| `"Functions"` | Translate feature-related text |
 
-ค่าอื่นที่เข้าถึงได้: `Win.Flags` (ค่าของทุกคอมโพเนนต์ที่ตั้ง Flag), `Win.Key` (ปุ่มซ่อน/แสดงปัจจุบัน), `Win.Main`, `Win.Float`, `Win.StatsPill`
+#### `AutoSave`
+
+```lua
+AutoSave = true
+```
+
+Enables automatic saving when supported and after the configuration system is ready.
+
+#### `ConfigName`
+
+```lua
+ConfigName = "default"
+```
+
+The resulting filename is `default.json`.
+
+#### `Folder`
+
+```lua
+Folder = "Flexozy"
+```
+
+Sets the directory used for configuration files.
+
+#### `StatsPill`
+
+```lua
+StatsPill = true
+```
+
+Controls the initial FPS/ping display preference.
 
 ---
 
-## คอมโพเนนต์
+## Tabs
 
-สร้างจาก `Tab:Group("ชื่อการ์ด", "Left" | "Right")` (ไม่ใส่ฝั่ง = เต็มความกว้าง)
-ทุกคอมโพเนนต์เรียกได้ 2 แบบ: **เรียงพารามิเตอร์** หรือ **ส่งตาราง**
+Tabs organize the interface into separate pages.
 
-```lua
-g:Toggle("ชื่อ", "คำอธิบาย", false, function(v) end, "FlagName")
-g:Toggle({ Title = "ชื่อ", Desc = "คำอธิบาย", Default = false, Callback = function(v) end, Flag = "FlagName" })
-```
-
-### Toggle
-```lua
-local t = g:Toggle("Auto Farm", "คำอธิบาย", false, function(on) end, "AutoFarm")
-t.Set(true)      -- ตั้งค่า (เรียก callback ด้วย)  |  t.Set(true, true) = ไม่เรียก callback
-t.Get()          -- true / false
-```
-
-### Slider
-```lua
--- (ชื่อ, min, max, default, หน่วย, callback, step, flag)
-local s = g:Slider("Distance", 5, 50, 15, "studs", function(v) end, 1, "Distance")
--- แบบตาราง: ทศนิยม + ยิง callback ตอนปล่อยมือ
-g:Slider({ Title = "Delay", Min = 0, Max = 1, Step = 0.05, Default = 0.2, Suffix = "s", OnRelease = true,
-           Callback = function(v) end })
-s.Set(20)  s.Get()
-```
-
-### Dropdown
-```lua
--- เลือกอันเดียว: (ชื่อ, ตัวเลือก, ค่าเริ่มต้น, callback, flag)
-local d = g:Dropdown("Method", { "Normal", "Fast", "Safe" }, "Normal", function(v) end, "Method")
-
--- เลือกหลายอัน: callback ได้ตารางที่เลือก
-local m = g:Dropdown({ Title = "Weapons", Options = { "Melee", "Sword", "Fruit" }, Default = { "Melee" },
-                       Multi = true, Callback = function(list) end })
-
-d.Get()                          -- ค่าปัจจุบัน
-d.Set("Fast")                    -- ตั้งค่า
-d.Refresh({ "A", "B", "C" })     -- เปลี่ยนรายการตัวเลือกใหม่ (เช่น รายชื่อผู้เล่น)
-```
-
-### Button
-```lua
-local b = g:Button("Teleport", "คำอธิบาย", function() end)
-b.SetTitle("ชื่อใหม่")
-```
-
-### Input
-```lua
--- (ชื่อ, placeholder, ค่าเริ่มต้น, callback, flag)  — callback เรียกเมื่อกด Enter หรือคลิกออกจากช่อง
-local i = g:Input("Target", "พิมพ์ชื่อ", "", function(text) end, "Target")
-i.Get()  i.Set("abc")
-```
-
-### Keybind
-```lua
-g:Keybind({
-    Title = "Quick toggle", Default = Enum.KeyCode.F, Flag = "QuickKey",
-    Callback = function(key) end,   -- เรียกเมื่อกดปุ่มที่ตั้งไว้
-    Changed  = function(key) end,   -- เรียกเมื่อผู้ใช้ตั้งปุ่มใหม่
-})
--- ตอนตั้งปุ่ม: กดปุ่มที่ต้องการ | Esc = ยกเลิก | Backspace = ล้างปุ่ม
-```
-
-### Label / Divider
-```lua
-local l = g:Label("ข้อความ")   l.Set("ข้อความใหม่")
-g:Divider()
-```
-
----
-
-## แจ้งเตือน (Notify)
+### Syntax
 
 ```lua
-Win:Notify({
-    Title    = "Flexozy",
-    Content  = "โหลดสำเร็จ",
-    Duration = 3,            -- วินาที
-    Type     = "Success",    -- Info (ค่าเริ่มต้น) | Success | Warning | Error
+local MainTab = Window:Tab({
+    Title = "Main",
+    Subtitle = "Main Features",
+    Icon = "Grid",
 })
 ```
 
----
+A title-only shorthand is also supported:
 
-## หมวด Settings (`Win:BuildSettings(tab)`)
+```lua
+local MainTab = Window:Tab("Main")
+```
 
-เรียกบรรทัดเดียวจะได้ตัวแปรเหล่านี้ทั้งหมด (ทุกตัวถูกเซฟลงคอนฟิกให้อัตโนมัติ):
+### Tab Parameters
 
-| กลุ่ม | ตัวแปร | Flag |
+| Parameter | Type | Description |
 |---|---|---|
-| Appearance | **UI Size** 25% – 200% | `UI.Scale` |
-| | Quick size (25 / 50 / 75 / 100 / 125 / 150 / 200%) | – |
-| | Auto-fit to screen (ย่ออัตโนมัติเมื่อจอเล็ก) | `UI.AutoFit` |
-| | Accent color (8 สี) | `UI.Accent` |
-| | Window opacity | `UI.Opacity` |
-| Interface | Show FPS / MS pill | `UI.StatsPill` |
-| | Show floating button | `UI.FloatButton` |
-| | Notifications | `UI.Notify` |
-| | Toggle UI key | `UI.ToggleKey` |
-| | Unload UI | – |
-| Config | Auto-save | `UI.AutoSave` |
-| | Config name + Save / Load / Reset | – |
+| `Title` | string/table | Tab name |
+| `Subtitle` | string | Supporting text displayed in the tab header |
+| `Icon` | string/number | Icon URI, asset ID, or supported icon name |
+| `Bottom` | boolean | Places the tab in the bottom navigation area |
 
-> **เคล็ดลับเรื่องขนาด:** ถ้าลาก UI Size แล้วมือถือ/จอเล็กเกินไป ให้ใช้ Quick size หรือกดปุ่ม Reset UI settings ได้เสมอ
+### Example
+
+```lua
+local MainTab = Window:Tab({
+    Title = "Main",
+    Subtitle = "Main Features",
+    Icon = "Grid",
+})
+
+local PlayerTab = Window:Tab({
+    Title = "Player",
+    Subtitle = "Player Settings",
+    Icon = "Sword",
+})
+
+local SettingsTab = Window:Tab({
+    Title = "Settings",
+    Subtitle = "Customize your UI",
+    Icon = "Settings",
+})
+```
+
+### Built-in Icon Names
+
+The library defines these icon mappings:
+
+| Name | Purpose |
+|---|---|
+| `Grid` | Main/general |
+| `Sword` | Combat/player |
+| `Skull` | Combat |
+| `Zap` | Fast actions |
+| `Server` | Server |
+| `Eye` | Visibility |
+| `Settings` | Settings |
+| `Refresh` | Refresh |
+| `Teleport` | Teleport |
+
+You can also supply a numeric Roblox asset ID or a supported image URI.
 
 ---
 
-## ระบบคอนฟิก (เซฟค่าอัตโนมัติ)
+## Groups
 
-1. ใส่พารามิเตอร์ `Flag` ให้คอมโพเนนต์ที่ต้องการเซฟ
-2. เรียก `Win:LoadConfig()` เป็นบรรทัดสุดท้ายของสคริปต์ (หลังสร้างคอมโพเนนต์ครบแล้ว)
-3. หลังจากนั้นทุกครั้งที่เปลี่ยนค่า จะเซฟลง `Flexozy/<ConfigName>.json` ให้เอง
+Groups place controls inside cards within a tab.
+
+### Basic Group
 
 ```lua
-g:Toggle("Auto Farm", nil, false, function(on) end, "AutoFarm")
-g:Slider("Distance", 5, 50, 15, "studs", function(v) end, 1, "Distance")
+local MainGroup = MainTab:Group("General")
+```
 
-Win:LoadConfig()
+### Left and Right Layout
 
--- อ่านค่าที่ตั้งไว้ในลูปฟาร์ม
-while task.wait() do
-    if Win.Flags.AutoFarm then
-        local dist = Win.Flags.Distance
-        -- ...
-    end
+```lua
+local LeftGroup = MainTab:Group("Player", "Left")
+local RightGroup = MainTab:Group("Movement", "Right")
+```
+
+### Group Parameters
+
+| Parameter | Type | Description |
+|---|---|---|
+| `gtitle` | string/table/nil | Group heading |
+| `side` | string/table | Optional column placement or group options |
+| `gopts` | table | Additional group options |
+
+Supported column values:
+
+- `"Left"`
+- `"Right"`
+
+When no column is supplied, the group uses the regular page layout.
+
+### Collapsible Groups
+
+```lua
+local AdvancedGroup = MainTab:Group("Advanced", "Right", {
+    Collapsible = true,
+    Collapsed = false,
+})
+```
+
+| Option | Type | Description |
+|---|---|---|
+| `Collapsible` | boolean | Allows the group to collapse |
+| `Collapsed` | boolean | Initial collapsed state |
+
+A collapsible group can also be created using the options-table shorthand:
+
+```lua
+local AdvancedGroup = MainTab:Group("Advanced", {
+    Side = "Right",
+    Collapsible = true,
+    Collapsed = true,
+})
+```
+
+### Collapse Methods
+
+```lua
+AdvancedGroup:SetCollapsed(true)
+AdvancedGroup:SetCollapsed(false)
+```
+
+The method accepts a boolean.
+
+---
+
+## UI Controls
+
+Controls are added to a group, not directly to the window.
+
+The library's control methods use configuration tables. The source also provides positional-argument handling for certain controls, but configuration tables are recommended for readability.
+
+### 1. Button
+
+Runs a callback when clicked.
+
+```lua
+MainGroup:Button({
+    Title = "Execute",
+    Desc = "Run an action",
+    Callback = function()
+        print("Executed")
+    end,
+})
+```
+
+| Parameter | Type | Description |
+|---|---|---|
+| `Title` | string | Button title |
+| `Desc` | string | Optional description |
+| `Callback` | function | Function called when clicked |
+
+Example:
+
+```lua
+MainGroup:Button({
+    Title = "Notify",
+    Desc = "Display a notification",
+    Callback = function()
+        Window:Notify({
+            Title = "Hello",
+            Content = "Action completed",
+            Type = "Success",
+        })
+    end,
+})
+```
+
+### 2. Toggle
+
+Represents an enabled or disabled state.
+
+```lua
+MainGroup:Toggle({
+    Title = "Auto Feature",
+    Desc = "Enable or disable the feature",
+    Default = false,
+    Flag = "Main.AutoFeature",
+    Callback = function(value)
+        print(value)
+    end,
+})
+```
+
+| Parameter | Type | Description |
+|---|---|---|
+| `Title` | string | Toggle title |
+| `Desc` | string | Optional description |
+| `Default` | boolean | Initial state |
+| `Flag` | string | Optional identifier for state/config storage |
+| `Callback` | function | Receives the new boolean state |
+
+Possible callback values:
+
+```lua
+true
+false
+```
+
+### 3. Slider
+
+Selects a numeric value from a range.
+
+```lua
+MainGroup:Slider({
+    Title = "Speed",
+    Min = 1,
+    Max = 100,
+    Default = 10,
+    Step = 1,
+    Suffix = "x",
+    Flag = "Player.Speed",
+    Callback = function(value)
+        print("Speed:", value)
+    end,
+})
+```
+
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `Title` | string | `"Slider"` | Slider title |
+| `Min` | number | `0` | Minimum value |
+| `Max` | number | `100` | Maximum value |
+| `Default` | number | `Min` | Initial value |
+| `Step` | number | `1` | Increment and snapping interval |
+| `Suffix` | string | `""` | Text appended to the displayed value |
+| `Flag` | string | none | State/config identifier |
+| `Callback` | function | no-op | Receives the current numeric value |
+| `OnRelease` | boolean | false/nil | Defers callback delivery during dragging until release behavior is processed |
+
+Example with decimal steps:
+
+```lua
+MainGroup:Slider({
+    Title = "Multiplier",
+    Min = 0.1,
+    Max = 5,
+    Default = 1,
+    Step = 0.1,
+    Suffix = "x",
+    Callback = function(value)
+        print(value)
+    end,
+})
+```
+
+The selected value is clamped to the minimum and maximum and snapped to the configured step.
+
+### 4. Dropdown
+
+Allows users to select an option or multiple options.
+
+Basic example:
+
+```lua
+MainGroup:Dropdown({
+    Title = "Select Mode",
+    Options = {
+        "Easy",
+        "Normal",
+        "Hard",
+    },
+    Default = "Normal",
+    Callback = function(value)
+        print(value)
+    end,
+})
+```
+
+| Parameter | Type | Description |
+|---|---|---|
+| `Title` | string | Dropdown title |
+| `Options` | table | Available options |
+| `Default` | string/value | Initial selection |
+| `Flag` | string | Optional state/config identifier |
+| `Callback` | function | Receives the selection |
+| `Multi` | boolean | Enables multiple selection where supported |
+
+Example with multiple selections:
+
+```lua
+MainGroup:Dropdown({
+    Title = "Select Items",
+    Options = {
+        "Item A",
+        "Item B",
+        "Item C",
+    },
+    Multi = true,
+    Default = {},
+    Callback = function(values)
+        for _, value in ipairs(values) do
+            print(value)
+        end
+    end,
+})
+```
+
+For multi-selection, the selected values are represented as a table. For single selection, the callback receives the selected option.
+
+### 5. Input
+
+Accepts text input.
+
+```lua
+MainGroup:Input({
+    Title = "Player Name",
+    Placeholder = "Enter a name",
+    Default = "",
+    Flag = "Player.Name",
+    Callback = function(value)
+        print(value)
+    end,
+})
+```
+
+| Parameter | Type | Description |
+|---|---|---|
+| `Title` | string | Input title |
+| `Placeholder` | string | Placeholder text |
+| `Default` | string | Initial text |
+| `Flag` | string | Optional state/config identifier |
+| `Callback` | function | Receives the input value |
+
+### 6. Keybind
+
+Allows a user to choose a keyboard key.
+
+```lua
+MainGroup:Keybind({
+    Title = "Action Key",
+    Default = Enum.KeyCode.G,
+    Flag = "Main.ActionKey",
+    Callback = function(key)
+        print("Pressed:", key.Name)
+    end,
+    Changed = function(key)
+        print("New key:", key.Name)
+    end,
+})
+```
+
+| Parameter | Type | Description |
+|---|---|---|
+| `Title` | string | Keybind title |
+| `Default` | Enum.KeyCode | Initial key |
+| `Flag` | string | Optional state/config identifier |
+| `Callback` | function | Runs when the configured key is pressed |
+| `Changed` | function | Receives a newly selected key |
+
+The user can click the keybind button to enter key-selection mode. Escape cancels selection; Backspace clears the binding.
+
+### 7. Paragraph
+
+Displays a title and content block.
+
+```lua
+MainGroup:Paragraph({
+    Title = "Information",
+    Content = "This is an information paragraph.",
+})
+```
+
+| Parameter | Type | Description |
+|---|---|---|
+| `Title` | string | Optional paragraph heading |
+| `Content` | string | Paragraph content |
+
+### 8. Label
+
+Displays a simple text label.
+
+```lua
+MainGroup:Label("Welcome to Flexozy UI")
+```
+
+Use labels for information that does not require user interaction.
+
+### 9. Divider
+
+Adds a visual separator.
+
+```lua
+MainGroup:Divider()
+```
+
+Use dividers to separate related controls.
+
+---
+
+## Callbacks and Flags
+
+### Callback
+
+A callback is a Lua function executed when a control triggers an action or changes value.
+
+```lua
+Callback = function(value)
+    print(value)
 end
 ```
 
-ต้องใช้ executor ที่รองรับ `writefile` / `readfile` / `isfile` ถ้าไม่รองรับ UI ยังใช้ได้ปกติ แค่เซฟไม่ได้
+The callback argument depends on the control:
 
----
-
-## ระบบภาษา (ไทย / อังกฤษ)
-
-เลือกได้ใน Settings → **Language** (English / ไทย) และ **Language scope**
-
-| Scope | แปลอะไร |
+| Control | Callback argument |
 |---|---|
-| `All` | ทุกอย่าง (แท็บ + ฟังก์ชัน + หน้า Home + แจ้งเตือน) |
-| `Tabs` | เฉพาะชื่อแท็บ หัวข้อ Section และคำบรรยายแท็บ |
-| `Functions` | เฉพาะชื่อกลุ่ม ปุ่ม สวิตช์ สไลด์ดรอปดาวน์ และคำอธิบายของฟังก์ชัน |
+| Button | No required argument |
+| Toggle | Boolean |
+| Slider | Number |
+| Dropdown, single | Selected option |
+| Dropdown, multi | Table of selected options |
+| Input | Text value |
+| Keybind | Selected/pressed key, where applicable |
 
-ส่วนที่ไม่ได้อยู่ใน scope ที่เลือกจะแสดงตามที่คุณเขียนไว้ในสคริปต์
+### Flag
 
-### ตั้งค่าเริ่มต้น
-
-```lua
-local Win = Flexozy:CreateWindow({
-    Language      = "TH",     -- "EN" หรือ "TH"
-    LanguageScope = "All",    -- "All" | "Tabs" | "Functions"
-})
-```
-
-### แปลข้อความของคุณเอง (2 วิธี)
-
-**วิธีที่ 1: พจนานุกรม** เขียนชื่อเป็นอังกฤษตามปกติ แล้วบอกคำแปลภาษาไทย
+A `Flag` provides a stable identifier for a control's value.
 
 ```lua
-Win:AddTranslations({
-    ["Auto Farm"] = "ฟาร์มอัตโนมัติ",
-    ["Farm Settings"] = "ตั้งค่าฟาร์ม",
-})
+Flag = "Player.Speed"
 ```
 
-(ใช้ได้สองทาง ถ้าคุณเขียนสคริปต์เป็นภาษาไทย แล้วใส่คู่แปลเป็นอังกฤษ ก็สลับกลับเป็นอังกฤษได้เช่นกัน)
+Use unique names to avoid collisions.
 
-**วิธีที่ 2: ใส่ตารางแทนข้อความ**
+Recommended naming patterns:
+
+- `Player.Speed`
+- `Player.JumpPower`
+- `Combat.Enabled`
+- `Settings.Language`
+
+The library registers flagged values for its state and configuration system. Flags do not automatically create game functionality; your callback must implement the actual behavior.
+
+### Default
+
+`Default` determines the initial control value.
+
+Examples:
 
 ```lua
-g:Toggle({ Title = { EN = "Auto Kill", TH = "ฆ่าอัตโนมัติ" }, Desc = { EN = "Shoot nearby enemies", TH = "ยิงศัตรูในระยะ" } })
-Win:Tab({ Title = { EN = "Main", TH = "หลัก" }, Subtitle = { EN = "Combat", TH = "การต่อสู้" } })
+Default = false
+Default = 25
+Default = "Normal"
+Default = ""
 ```
 
-### เมธอดที่เกี่ยวข้อง
-
-```lua
-Win:SetLanguage("TH")             -- หรือ "EN"
-Win:SetLanguageScope("Tabs")      -- "All" | "Tabs" | "Functions"
-Win:AddTranslations({ ... })
-```
+Use a value that matches the type expected by the control.
 
 ---
 
-## กันโดนเตะ (Protection)
+## Theme and Appearance
 
-อยู่ใน Settings → **Protection**
+### Set Accent Color
 
-| ตัวเลือก | ทำอะไร | Flag |
+```lua
+Window:SetAccent("Blue")
+```
+
+Built-in accent names:
+
+```lua
+"Violet"
+"Blue"
+"Cyan"
+"Green"
+"Yellow"
+"Orange"
+"Red"
+"Pink"
+```
+
+Custom color:
+
+```lua
+Window:SetAccent(Color3.fromRGB(59, 130, 246))
+```
+
+### Set UI Scale
+
+```lua
+Window:SetUIScale(1)
+```
+
+| Value | Meaning |
+|---|---|
+| `0.5` | 50% scale |
+| `1` | 100% scale |
+| `1.5` | 150% scale |
+| `2` | 200% scale |
+
+The method clamps the requested scale to a supported range of `0.25` through `3`. Automatic screen fitting may reduce the effective displayed scale.
+
+### Set Window Opacity
+
+```lua
+Window:SetOpacity(0.8)
+```
+
+The value is clamped between `0.2` and `1`.
+
+- `1` = fully opaque background
+- `0.8` = slightly transparent background
+- `0.2` = more transparent background
+
+### Show or Hide the UI
+
+```lua
+Window:Toggle(false) -- Hide
+Window:Toggle(true)  -- Show
+Window:Toggle()      -- Toggle current visibility
+```
+
+### Unload the UI
+
+```lua
+Window:Unload()
+```
+
+Unloading is intended to remove the UI and clean up its registered connections.
+
+---
+
+## Language System
+
+### Set Language
+
+```lua
+Window:SetLanguage("TH")
+```
+
+or:
+
+```lua
+Window:SetLanguage("EN")
+```
+
+### Set Translation Scope
+
+```lua
+Window:SetLanguageScope("All")
+```
+
+Supported scopes:
+
+| Scope | Description |
+|---|---|
+| `All` | All supported translatable UI strings |
+| `Tabs` | Tab-related text |
+| `Functions` | Feature-related text |
+
+### Add Custom Translations
+
+```lua
+Window:AddTranslations({
+    ["My Feature"] = "ฟีเจอร์ของฉัน",
+    ["Enable"] = "เปิดใช้งาน",
+    ["Disable"] = "ปิดใช้งาน",
+})
+```
+
+The translation map uses English strings as keys and Thai strings as values. Register translations before creating the relevant controls where possible.
+
+---
+
+## Notifications
+
+Display a notification toast.
+
+```lua
+Window:Notify({
+    Title = "Flexozy",
+    Content = "Operation completed.",
+    Type = "Success",
+    Duration = 3,
+})
+```
+
+### Notification Parameters
+
+| Parameter | Type | Description |
 |---|---|---|
-| Anti-AFK | กันโดนเตะเพราะไม่ขยับนาน (ราว 20 นาที) เปิดเป็นค่าเริ่มต้น | `UI.AntiAfk` |
-| Auto rejoin | เมื่อหลุดหรือโดนเตะ จะเข้าเกมนี้ใหม่ให้เอง (เข้าเซิร์ฟเวอร์ใหม่) | `UI.AutoRejoin` |
+| `Title` | string | Notification heading |
+| `Content` | string | Notification message |
+| `Type` | string | Notification style |
+| `Duration` | number | Display duration |
+
+Common notification types include:
+
+- `Success`
+- `Warning`
+- `Error`
+
+Example:
 
 ```lua
-Win:SetAntiAfk(true)
-Win:SetAutoRejoin(true)
+Window:Notify({
+    Title = "Warning",
+    Content = "Please check your settings.",
+    Type = "Warning",
+    Duration = 4,
+})
 ```
 
-> Anti-AFK ป้องกันเฉพาะการโดนเตะจาก **Idle** เท่านั้น ถ้าเกมเตะเองด้วยระบบของเกม ป้องกันไม่ได้ ให้ใช้ Auto rejoin ช่วยกลับเข้าเกม
+---
+
+## Configuration Management
+
+Flexozy UI provides configuration methods that store flagged control values.
+
+### Save Configuration
+
+```lua
+local success, err = Window:SaveConfig()
+```
+
+Save to a specific configuration name:
+
+```lua
+local success, err = Window:SaveConfig("profile2")
+```
+
+### Load Configuration
+
+```lua
+local success, err = Window:LoadConfig()
+```
+
+Load a specific configuration:
+
+```lua
+local success, err = Window:LoadConfig("profile2")
+```
+
+### Reset UI Settings
+
+```lua
+Window:ResetSettings()
+```
+
+This resets registered settings whose flags use the `UI.` prefix to their registered defaults.
+
+### Configuration Requirements
+
+Saving and loading depend on filesystem functions supplied by the execution environment, including:
+
+- `writefile`
+- `readfile`
+- `isfile`
+
+Folder creation may also use:
+
+- `makefolder`
+- `isfolder`
+
+The configuration system stores values as JSON. If the required filesystem functions are unavailable, the operation may return an error instead of succeeding.
+
+### Auto-Save
+
+```lua
+AutoSave = true
+```
+
+Auto-save is debounced to reduce repeated writes. Flagged values must be registered, and the configuration system must be ready before automatic saves occur.
 
 ---
 
-## ไอคอนที่มีให้
+## Window Methods
 
-`Flexozy.Icons.` → `Grid` `Sword` `Skull` `Zap` `Server` `Eye` `Settings` `Refresh` `Teleport`
-(ใช้ `rbxassetid://...` ของคุณเองได้ใน `Icon = "rbxassetid://123"`)
+The following methods are defined by the library's window object.
 
----
-
-## แก้ปัญหาเบื้องต้น
-
-| อาการ | วิธีแก้ |
+| Method | Purpose |
 |---|---|
-| UI ไม่ขึ้น | ตรวจลิงก์ว่าเป็นลิงก์ **raw** และ repo เป็น Public |
-| UI ใหญ่/เล็กเกินไป | Settings → UI Size หรือ Quick size |
-| ซ่อน UI แล้วหาไม่เจอ | กดปุ่มลอย (FX) หรือปุ่ม `RightControl` |
-| เซฟคอนฟิกไม่ได้ | executor ไม่รองรับ `writefile` |
-| ค่าที่เซฟไม่กลับมา | ต้องเรียก `Win:LoadConfig()` ท้ายสคริปต์ และตั้ง `Flag` ให้คอมโพเนนต์ |
+| `Window:Tab(options)` | Create a tab |
+| `Window:Section(name)` | Add a navigation section heading |
+| `Window:Notify(options)` | Show a notification |
+| `Window:SetAccent(color)` | Change the accent color |
+| `Window:SetUIScale(scale)` | Change UI scale |
+| `Window:SetOpacity(value)` | Change background opacity |
+| `Window:SetLanguage(language)` | Change language |
+| `Window:SetLanguageScope(scope)` | Change translation scope |
+| `Window:AddTranslations(map)` | Register custom translations |
+| `Window:SetAntiAfk(enabled)` | Enable or disable Anti-AFK behavior |
+| `Window:SetAutoRejoin(enabled)` | Enable or disable automatic rejoining |
+| `Window:SaveConfig(name)` | Save flagged values |
+| `Window:LoadConfig(name)` | Load flagged values |
+| `Window:ResetSettings()` | Reset registered UI settings |
+| `Window:Toggle(show)` | Show or hide the window |
+| `Window:Unload()` | Remove the UI and clean up connections |
 
 ---
+
+## Built-in Settings
+
+The library includes its own settings interface for common configuration tasks.
+
+Depending on the selected settings and environment, it provides options for:
+
+- Accent color
+- UI scale and quick sizing
+- Automatic fitting on smaller screens
+- Language and translation scope
+- Toggle key
+- FPS/ping display
+- Notifications
+- Anti-AFK
+- Automatic rejoin
+- Auto-save
+- Configuration name
+- Save and load configuration
+- Resetting UI settings
+- User profile information
+
+### Anti-AFK
+
+```lua
+Window:SetAntiAfk(true)
+```
+
+Disable it with:
+
+```lua
+Window:SetAntiAfk(false)
+```
+
+This feature attempts to simulate input when the player becomes idle. Roblox behavior and environment restrictions may affect whether it works.
+
+### Auto Rejoin
+
+```lua
+Window:SetAutoRejoin(true)
+```
+
+Disable it with:
+
+```lua
+Window:SetAutoRejoin(false)
+```
+
+This feature listens for certain Roblox error prompts and attempts to teleport the local player back to the current place. It cannot guarantee recovery from every disconnect or server error.
+
+---
+
+## Compatibility
+
+Flexozy UI uses Roblox services and UI classes, including:
+
+- `TweenService`
+- `UserInputService`
+- `RunService`
+- `Players`
+- `CoreGui`
+- `Stats`
+- `MarketplaceService`
+- `HttpService`
+
+Some features may additionally depend on environment-provided functions such as `gethui`, `getcustomasset`, `writefile`, and `readfile`.
+
+Compatibility varies by execution environment. Features that require filesystem access, custom asset loading, or simulated input may not work everywhere.
+
+Use custom Lua code only in environments and Roblox experiences where you have permission to run it.
+
+---
+
+## Troubleshooting
+
+### UI does not appear
+
+- Check that the source URL is accessible.
+- Verify that the loading environment supports the required Lua features.
+- Check the console for errors.
+- Try running a minimal example first.
+
+### Configuration does not save
+
+- Confirm filesystem support.
+- Check whether the configuration directory can be created.
+- Check the return values from `SaveConfig()` and `LoadConfig()`.
+
+### Logo does not load
+
+- Verify the asset ID or image URI.
+- For HTTP image URLs, confirm that the environment supports the required download and custom-asset functions.
+
+### Some translations do not change
+
+- Check `LanguageScope`.
+- Register custom translations with `AddTranslations()`.
+- Confirm that the text matches the dictionary key.
+
+---
+
+## Source Code
+
+- **Repository:** https://github.com/LoaderHub1990/Flexozy-UI
+- **Raw source:** https://raw.githubusercontent.com/LoaderHub1990/Flexozy-UI/refs/heads/main/FlexozyUI.lua
 
 ## License
 
-ใช้ได้อิสระ แก้ไขและแจกต่อได้ (ใส่เครดิต Flexozy จะขอบคุณมาก)
+Add a `LICENSE` file to the repository to define permitted use, modification, and redistribution. Without an explicit license, do not assume that the source is freely redistributable.
+
+---
+
+**Flexozy UI — Built for customizable Roblox interfaces.**
