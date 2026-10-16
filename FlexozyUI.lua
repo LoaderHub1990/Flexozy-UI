@@ -40,9 +40,9 @@ local T = {
     Card   = C(30, 30, 36),
     Card2  = C(39, 39, 47),
     Stroke = C(56, 56, 66),
-    Text   = C(245, 246, 250),
-    Dim    = C(150, 152, 163),
-    Muted  = C(104, 106, 118),
+    Text   = C(252, 252, 255),
+    Dim    = C(184, 187, 200),
+    Muted  = C(146, 149, 164),
     Accent = Flexozy.Accents.Violet,
     Danger = C(239, 68, 68),
     Warn   = C(245, 158, 11),
@@ -66,7 +66,7 @@ end
 local function Label(parent, props)
     local d = {
         BackgroundTransparency = 1, BorderSizePixel = 0,
-        Font = Enum.Font.Gotham, TextSize = 11, TextColor3 = T.Text,
+        Font = Enum.Font.GothamMedium, TextSize = 12.5, TextColor3 = T.Text,
         TextXAlignment = Enum.TextXAlignment.Left,
         TextTruncate = Enum.TextTruncate.AtEnd,
     }
@@ -174,8 +174,8 @@ local DefaultDict = {
     ["Language scope"] = "ขอบเขตการแปล", ["All"] = "ทั้งหมด", ["Tabs"] = "แท็บ", ["Functions"] = "ฟังก์ชัน",
     ["All = everything, Tabs = tab names only, Functions = features only"] = "ทั้งหมด = ทุกอย่าง, แท็บ = เฉพาะชื่อแท็บ, ฟังก์ชัน = เฉพาะตัวเลือกฟีเจอร์",
     ["Toggle key"] = "ปุ่มซ่อน/แสดง",
-    ["Show FPS / MS pill"] = "แสดงแถบ FPS / MS", ["FPS and ping bar at the top of the screen"] = "แถบ FPS และ Ping ด้านบนจอ",
-    ["Show floating button"] = "แสดงปุ่มลอย", ["Floating button to open/close the menu"] = "ปุ่มลอยเปิด/ปิดเมนู",
+    ["Show FPS / MS pill"] = "แสดงแถบ FPS / MS", ["FPS and ping bar at the top of the screen (click it to open/close the menu)"] = "แถบ FPS และ Ping ด้านบนจอ (กดเพื่อเปิด/ปิดเมนู)",
+    ["Open"] = "เปิด",
     ["Notifications"] = "การแจ้งเตือน", ["Toggle UI key"] = "ปุ่มซ่อน/แสดง UI",
     ["Unload UI"] = "ปิด UI", ["Close and disconnect everything"] = "ปิดและตัดการเชื่อมต่อทั้งหมด",
     ["Anti-AFK"] = "กันหลุด (Anti-AFK)", ["Prevents the 20-minute idle kick"] = "กันโดนเตะเมื่อไม่ขยับ 20 นาที",
@@ -508,7 +508,7 @@ function Flexozy:CreateWindow(cfg)
         Font = Enum.Font.GothamBold, TextSize = 14
     })
     Label(Header, {
-        Position = UDim2.fromOffset(68, 34), Size = UDim2.new(1, -250, 0, 14), Text = sub, TextSize = 10,
+        Position = UDim2.fromOffset(68, 34), Size = UDim2.new(1, -250, 0, 14), Text = sub, TextSize = 11.5,
         TextColor3 = T.Muted
     })
     local function HeaderButton(xFromRight)
@@ -526,7 +526,7 @@ function Flexozy:CreateWindow(cfg)
     local BtnMin = HeaderButton(-124)
     local dash = New("Frame", {
         AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),
-        Size = UDim2.fromOffset(12, 2), BackgroundColor3 = T.Text, BorderSizePixel = 0
+        Size = UDim2.fromOffset(14, 3), BackgroundColor3 = T.Text, BorderSizePixel = 0
     }, BtnMin)
     Round(dash, 1)
     local BtnMax = HeaderButton(-86)
@@ -538,7 +538,7 @@ function Flexozy:CreateWindow(cfg)
     Stroke(sq, T.Text, 1.5)
     local BtnClose = HeaderButton(-48)
     Label(BtnClose, {
-        Size = UDim2.fromScale(1, 1), Text = "X", Font = Enum.Font.GothamBold, TextSize = 12,
+        Size = UDim2.fromScale(1, 1), Text = "X", Font = Enum.Font.GothamBold, TextSize = 14,
         TextXAlignment = Enum.TextXAlignment.Center
     })
     local hl = New("Frame", {
@@ -590,11 +590,11 @@ function Flexozy:CreateWindow(cfg)
     Stroke(Dot, T.Card, 2)
     Label(UserCard, {
         Position = UDim2.fromOffset(54, 12), Size = UDim2.new(1, -60, 0, 16), Text = LP.DisplayName,
-        Font = Enum.Font.GothamBold, TextSize = 11
+        Font = Enum.Font.GothamBold, TextSize = 12.5
     })
     Label(UserCard, {
         Position = UDim2.fromOffset(54, 29), Size = UDim2.new(1, -60, 0, 14), Text = "@" .. LP.Name,
-        TextSize = 9.5, TextColor3 = T.Muted
+        TextSize = 11, TextColor3 = T.Muted
     })
 
     local Pop = New("Frame", {
@@ -626,7 +626,7 @@ function Flexozy:CreateWindow(cfg)
     })
     Label(ph, {
         Position = UDim2.fromOffset(58, 26), Size = UDim2.new(1, -58, 0, 14), Text = "@" .. LP.Name,
-        TextSize = 10, TextColor3 = T.Muted
+        TextSize = 11.5, TextColor3 = T.Muted
     })
     New("Frame", {
         Size = UDim2.new(1, 0, 0, 1), BackgroundColor3 = T.Stroke, BackgroundTransparency = 0.4,
@@ -637,12 +637,12 @@ function Flexozy:CreateWindow(cfg)
         local r = New("Frame", {
             Size = UDim2.new(1, 0, 0, 16), BackgroundTransparency = 1, LayoutOrder = order
         }, Pop)
-        local k = Label(r, { Size = UDim2.new(0.42, 0, 1, 0), Text = "", TextSize = 10, TextColor3 = T.Dim })
+        local k = Label(r, { Size = UDim2.new(0.42, 0, 1, 0), Text = "", TextSize = 11.5, TextColor3 = T.Dim })
         Loc(key, "ui", function(t) k.Text = t end)
         local v = Label(r, {
             AnchorPoint = Vector2.new(1, 0), Position = UDim2.fromScale(1, 0),
             Size = UDim2.new(0.58, 0, 1, 0), Text = "", TextXAlignment = Enum.TextXAlignment.Right,
-            Font = Enum.Font.GothamMedium, TextSize = 10
+            Font = Enum.Font.GothamSemibold, TextSize = 11.5
         })
         local function upd() v.Text = getVal() end
         upd()
@@ -713,7 +713,7 @@ function Flexozy:CreateWindow(cfg)
 
     local SearchBox = New("TextBox", {
         Position = UDim2.fromOffset(6, 6), Size = UDim2.new(1, -12, 0, 30), BackgroundColor3 = T.Card2,
-        Text = "", PlaceholderText = "", PlaceholderColor3 = T.Muted, Font = Enum.Font.Gotham, TextSize = 11,
+        Text = "", PlaceholderText = "", PlaceholderColor3 = T.Muted, Font = Enum.Font.GothamMedium, TextSize = 12.5,
         TextColor3 = T.Text, ClearTextOnFocus = false, TextXAlignment = Enum.TextXAlignment.Left,
     }, Sidebar)
     Round(SearchBox, 9)
@@ -795,13 +795,13 @@ function Flexozy:CreateWindow(cfg)
                         Interact(b)
                         Label(b, {
                             Position = UDim2.fromOffset(12, 6), Size = UDim2.new(1, -24, 0, 16),
-                            Text = Tr(e.raw, "func"), Font = Enum.Font.GothamBold, TextSize = 11
+                            Text = Tr(e.raw, "func"), Font = Enum.Font.GothamBold, TextSize = 12.5
                         })
                         local path = Tr(e.tab.Title, "tab")
                         if e.groupTitle then path = path .. "  >  " .. Tr(e.groupTitle, "func") end
                         Label(b, {
                             Position = UDim2.fromOffset(12, 24), Size = UDim2.new(1, -24, 0, 14), Text = path,
-                            TextSize = 9.5, TextColor3 = T.Muted
+                            TextSize = 11, TextColor3 = T.Muted
                         })
                         b.MouseButton1Click:Connect(function() GoTo(e) end)
                     end
@@ -839,7 +839,7 @@ function Flexozy:CreateWindow(cfg)
         PaddingRight = UDim.new(0, 9)
     }, Tip)
     local tipLbl = Label(Tip, {
-        Size = UDim2.fromOffset(0, 0), AutomaticSize = Enum.AutomaticSize.XY, Text = "", TextSize = 10,
+        Size = UDim2.fromOffset(0, 0), AutomaticSize = Enum.AutomaticSize.XY, Text = "", TextSize = 11.5,
         TextWrapped = true, TextTruncate = Enum.TextTruncate.None, ZIndex = 81,
     })
     New("UISizeConstraint", { MaxSize = Vector2.new(224, math.huge) }, tipLbl)
@@ -907,7 +907,7 @@ function Flexozy:CreateWindow(cfg)
         }, Nav)
         local sl = Label(f, {
             Position = UDim2.fromOffset(10, 4), Size = UDim2.new(1, -10, 1, -4), Text = "",
-            Font = Enum.Font.GothamMedium, TextSize = 9.5, TextColor3 = T.Muted
+            Font = Enum.Font.GothamSemibold, TextSize = 11, TextColor3 = T.Muted
         })
         Loc(name, "tab", function(t) sl.Text = string.upper(t) end)
     end
@@ -938,7 +938,7 @@ function Flexozy:CreateWindow(cfg)
         }, btn)
         local name = Label(btn, {
             Position = UDim2.fromOffset(46, 0), Size = UDim2.new(1, -52, 1, 0), Text = "", TextColor3 = T.Dim,
-            TextSize = 12, Font = Enum.Font.GothamMedium
+            TextSize = 13, Font = Enum.Font.GothamSemibold
         })
         Loc(tcfg.Title or "Tab", "tab", function(t) name.Text = t end)
         local Page = New("ScrollingFrame", {
@@ -956,7 +956,7 @@ function Flexozy:CreateWindow(cfg)
         })
         Loc(tcfg.Title or "Tab", "tab", function(t) hT.Text = t end)
         local hS = Label(head, {
-            Position = UDim2.fromOffset(2, 27), Size = UDim2.new(1, 0, 0, 14), Text = "", TextSize = 10.5,
+            Position = UDim2.fromOffset(2, 27), Size = UDim2.new(1, 0, 0, 14), Text = "", TextSize = 12,
             TextColor3 = T.Dim
         })
         Loc(tcfg.Subtitle or "", "tab", function(t) hS.Text = t end)
@@ -1058,7 +1058,7 @@ function Flexozy:CreateWindow(cfg)
                 AccentGrad(gb, 90)
                 local gl = Label(gh, {
                     Position = UDim2.fromOffset(10, 0), Size = UDim2.new(1, -30, 1, 0), Text = "",
-                    Font = Enum.Font.GothamBold, TextSize = 12
+                    Font = Enum.Font.GothamBold, TextSize = 13
                 })
                 Loc(gtitle, "func", function(t) gl.Text = t end)
             end
@@ -1067,7 +1067,7 @@ function Flexozy:CreateWindow(cfg)
             if collapsible then
                 local arrow = Label(gh, {
                     AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, 0, 0, 0), Size = UDim2.fromOffset(16, 16),
-                    Text = "v", TextXAlignment = Enum.TextXAlignment.Center, TextColor3 = T.Dim, Font = Enum.Font.GothamBold, TextSize = 11,
+                    Text = "v", TextXAlignment = Enum.TextXAlignment.Center, TextColor3 = T.Dim, Font = Enum.Font.GothamBold, TextSize = 12.5,
                 })
                 function G:SetCollapsed(v)
                     collapsed = v == true
@@ -1086,7 +1086,7 @@ function Flexozy:CreateWindow(cfg)
             function G:Label(text)
                 local l = Label(card, {
                     Size = UDim2.new(1, 0, 0, 14), AutomaticSize = Enum.AutomaticSize.Y, Text = "",
-                    TextColor3 = T.Dim, TextSize = 10.5, TextWrapped = true,
+                    TextColor3 = T.Dim, TextSize = 12, TextWrapped = true,
                     TextTruncate = Enum.TextTruncate.None, LayoutOrder = ord(),
                 })
                 local setL = Loc(text or "", "func", function(t) l.Text = t end)
@@ -1111,13 +1111,13 @@ function Flexozy:CreateWindow(cfg)
                     Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Text = ""
                 }, row)
                 local tl = Label(row, {
-                    Size = UDim2.new(1, -52, 0, 16), Text = "", Font = Enum.Font.GothamMedium, TextSize = 11.5
+                    Size = UDim2.new(1, -52, 0, 16), Text = "", Font = Enum.Font.GothamSemibold, TextSize = 13
                 })
                 Loc(o.Title or "Toggle", "func", function(t) tl.Text = t end)
                 if desc then
                     local dl = Label(row, {
                         Position = UDim2.fromOffset(0, 18), Size = UDim2.new(1, -52, 0, 14), Text = "",
-                        TextSize = 9.5, TextColor3 = T.Dim
+                        TextSize = 11, TextColor3 = T.Dim
                     })
                     Loc(desc, "func", function(t) dl.Text = t end)
                 end
@@ -1177,12 +1177,12 @@ function Flexozy:CreateWindow(cfg)
                     Size = UDim2.new(1, 0, 0, 40), BackgroundTransparency = 1, LayoutOrder = ord()
                 }, card)
                 local tl = Label(row, {
-                    Size = UDim2.new(1, -80, 0, 16), Text = "", Font = Enum.Font.GothamMedium, TextSize = 11.5
+                    Size = UDim2.new(1, -80, 0, 16), Text = "", Font = Enum.Font.GothamSemibold, TextSize = 13
                 })
                 Loc(o.Title or "Slider", "func", function(t) tl.Text = t end)
                 local vl = Label(row, {
                     Position = UDim2.new(1, -80, 0, 0), Size = UDim2.fromOffset(80, 16),
-                    TextXAlignment = Enum.TextXAlignment.Right, Font = Enum.Font.GothamBold, TextSize = 10.5,
+                    TextXAlignment = Enum.TextXAlignment.Right, Font = Enum.Font.GothamBold, TextSize = 12,
                     TextColor3 = T.Accent
                 })
                 local track = New("Frame", {
@@ -1270,7 +1270,7 @@ function Flexozy:CreateWindow(cfg)
                     LayoutOrder = ord()
                 }, card)
                 local tl = Label(row, {
-                    Size = UDim2.new(1, 0, 0, 14), Text = "", TextSize = 10.5, TextColor3 = T.Dim
+                    Size = UDim2.new(1, 0, 0, 14), Text = "", TextSize = 12, TextColor3 = T.Dim
                 })
                 Loc(o.Title or "Dropdown", "func", function(t) tl.Text = t end)
                 local box = New("TextButton", {
@@ -1282,7 +1282,7 @@ function Flexozy:CreateWindow(cfg)
                 Interact(box)
                 local vl = Label(box, {
                     Position = UDim2.fromOffset(10, 0), Size = UDim2.new(1, -34, 1, 0), Text = "",
-                    Font = Enum.Font.GothamMedium, TextSize = 11
+                    Font = Enum.Font.GothamSemibold, TextSize = 12.5
                 })
                 local arrow = Label(box, {
                     Position = UDim2.new(1, -26, 0, 0), Size = UDim2.fromOffset(20, 32), Text = "v",
@@ -1349,7 +1349,7 @@ function Flexozy:CreateWindow(cfg)
                         Interact(ob)
                         local lbl = Label(ob, {
                             Position = UDim2.fromOffset(10, 0), Size = UDim2.new(1, -30, 1, 0),
-                            Text = Tr(opt, "func"), TextSize = 10.5, TextColor3 = T.Dim
+                            Text = Tr(opt, "func"), TextSize = 12, TextColor3 = T.Dim
                         })
                         local mark = New("Frame", {
                             AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -10, 0.5, 0),
@@ -1431,14 +1431,14 @@ function Flexozy:CreateWindow(cfg)
                 local tl = Label(b, {
                     Position = UDim2.fromOffset(12, desc and 6 or 0),
                     Size = UDim2.new(1, -40, 0, desc and 16 or 34), Text = "", Font = Enum.Font.GothamBold,
-                    TextSize = 11
+                    TextSize = 12.5
                 })
                 local setTl = Loc(o.Title or "Button", "func", function(t) tl.Text = t end)
                 local dl, setDl
                 if desc then
                     dl = Label(b, {
                         Position = UDim2.fromOffset(12, 23), Size = UDim2.new(1, -40, 0, 14), Text = "",
-                        TextSize = 9, TextColor3 = T.Dim
+                        TextSize = 10.5, TextColor3 = T.Dim
                     })
                     setDl = Loc(desc, "func", function(t) dl.Text = t end)
                 end
@@ -1471,13 +1471,13 @@ function Flexozy:CreateWindow(cfg)
                     Size = UDim2.new(1, 0, 0, 54), BackgroundTransparency = 1, LayoutOrder = ord()
                 }, card)
                 local tl = Label(row, {
-                    Size = UDim2.new(1, 0, 0, 14), Text = "", TextSize = 10.5, TextColor3 = T.Dim
+                    Size = UDim2.new(1, 0, 0, 14), Text = "", TextSize = 12, TextColor3 = T.Dim
                 })
                 Loc(o.Title or "Input", "func", function(t) tl.Text = t end)
                 local tb = New("TextBox", {
                     Position = UDim2.fromOffset(0, 18), Size = UDim2.new(1, 0, 0, 32), BackgroundColor3 = T.Card2,
                     Text = o.Default or "", PlaceholderText = "", PlaceholderColor3 = T.Muted,
-                    Font = Enum.Font.Gotham, TextSize = 11, TextColor3 = T.Text, ClearTextOnFocus = false,
+                    Font = Enum.Font.GothamMedium, TextSize = 12.5, TextColor3 = T.Text, ClearTextOnFocus = false,
                     TextXAlignment = Enum.TextXAlignment.Left,
                 }, row)
                 Round(tb, 8)
@@ -1506,7 +1506,7 @@ function Flexozy:CreateWindow(cfg)
                     Size = UDim2.new(1, 0, 0, 28), BackgroundTransparency = 1, LayoutOrder = ord()
                 }, card)
                 local tl = Label(row, {
-                    Size = UDim2.new(1, -100, 1, 0), Text = "", Font = Enum.Font.GothamMedium, TextSize = 11.5
+                    Size = UDim2.new(1, -100, 1, 0), Text = "", Font = Enum.Font.GothamSemibold, TextSize = 13
                 })
                 Loc(o.Title or "Keybind", "func", function(t) tl.Text = t end)
                 local kb = New("TextButton", {
@@ -1519,7 +1519,7 @@ function Flexozy:CreateWindow(cfg)
                 Interact(kb)
                 local kl = Label(kb, {
                     Size = UDim2.fromScale(1, 1), Text = "", TextXAlignment = Enum.TextXAlignment.Center,
-                    Font = Enum.Font.GothamBold, TextSize = 10
+                    Font = Enum.Font.GothamBold, TextSize = 11.5
                 })
                 local function show()
                     kl.Text = key == Enum.KeyCode.Unknown and Tr("None", "func") or key.Name
@@ -1574,13 +1574,13 @@ function Flexozy:CreateWindow(cfg)
                 if o.Title then
                     local tl = Label(row, {
                         Size = UDim2.new(1, 0, 0, 16), Text = "", Font = Enum.Font.GothamBold,
-                        TextSize = 11.5, LayoutOrder = 1
+                        TextSize = 13, LayoutOrder = 1
                     })
                     Loc(o.Title, "func", function(t) tl.Text = t end)
                 end
                 local bl = Label(row, {
                     Size = UDim2.new(1, 0, 0, 14), AutomaticSize = Enum.AutomaticSize.Y, Text = "", TextColor3 = T.Dim,
-                    TextSize = 10.5, TextWrapped = true, TextTruncate = Enum.TextTruncate.None, LayoutOrder = 2,
+                    TextSize = 12, TextWrapped = true, TextTruncate = Enum.TextTruncate.None, LayoutOrder = 2,
                 })
                 local setC = Loc(o.Content or "", "func", function(t) bl.Text = t end)
                 return { Instance = row, Set = function(t) setC(t) end }
@@ -1603,7 +1603,7 @@ function Flexozy:CreateWindow(cfg)
                     Size = UDim2.new(1, 0, 0, 22), BackgroundTransparency = 1, LayoutOrder = 1
                 }, box)
                 local tl = Label(bar, {
-                    Size = UDim2.new(1, -64, 1, 0), Text = "", Font = Enum.Font.GothamBold, TextSize = 10.5,
+                    Size = UDim2.new(1, -64, 1, 0), Text = "", Font = Enum.Font.GothamBold, TextSize = 12,
                     TextColor3 = T.Dim
                 })
                 Loc(o.Title or "", "func", function(t) tl.Text = t end)
@@ -1617,7 +1617,7 @@ function Flexozy:CreateWindow(cfg)
                 Interact(cbtn)
                 local cl = Label(cbtn, {
                     Size = UDim2.fromScale(1, 1), Text = "", TextXAlignment = Enum.TextXAlignment.Center,
-                    Font = Enum.Font.GothamBold, TextSize = 9.5
+                    Font = Enum.Font.GothamBold, TextSize = 11
                 })
                 local copied = false
                 local function copyText() cl.Text = Tr(copied and "Copied" or "Copy", "func") end
@@ -1625,7 +1625,7 @@ function Flexozy:CreateWindow(cfg)
                 table.insert(W.LangFns, copyText)
                 local body = Label(box, {
                     Size = UDim2.new(1, 0, 0, 14), AutomaticSize = Enum.AutomaticSize.Y, Text = "", TextColor3 = T.Text,
-                    Font = o.Font or Enum.Font.Code, TextSize = 10.5, TextWrapped = true,
+                    Font = o.Font or Enum.Font.Code, TextSize = 12, TextWrapped = true,
                     TextTruncate = Enum.TextTruncate.None, LayoutOrder = 2,
                 })
                 local current = ""
@@ -1654,12 +1654,12 @@ function Flexozy:CreateWindow(cfg)
                     Size = UDim2.new(1, 0, 0, 36), BackgroundTransparency = 1, LayoutOrder = ord()
                 }, card)
                 local tl = Label(row, {
-                    Size = UDim2.new(1, -90, 0, 16), Text = "", Font = Enum.Font.GothamMedium, TextSize = 11.5
+                    Size = UDim2.new(1, -90, 0, 16), Text = "", Font = Enum.Font.GothamSemibold, TextSize = 13
                 })
                 local setTl = Loc(o.Title or "Progress", "func", function(t) tl.Text = t end)
                 local vl = Label(row, {
                     Position = UDim2.new(1, -90, 0, 0), Size = UDim2.fromOffset(90, 16),
-                    TextXAlignment = Enum.TextXAlignment.Right, Font = Enum.Font.GothamBold, TextSize = 10.5,
+                    TextXAlignment = Enum.TextXAlignment.Right, Font = Enum.Font.GothamBold, TextSize = 12,
                     TextColor3 = T.Accent
                 })
                 Themed(function() vl.TextColor3 = T.Accent end)
@@ -1738,7 +1738,7 @@ function Flexozy:CreateWindow(cfg)
         AccentGrad(gbar, 90)
         local greet = Label(gc, {
             Position = UDim2.fromOffset(18, 16), Size = UDim2.new(0.5, 0, 0, 14), Text = Greeting(),
-            TextSize = 10.5, TextColor3 = T.Muted
+            TextSize = 12, TextColor3 = T.Muted
         })
         Label(gc, {
             Position = UDim2.fromOffset(18, 34), Size = UDim2.new(0.5, 0, 0, 28), Text = LP.DisplayName,
@@ -1751,7 +1751,7 @@ function Flexozy:CreateWindow(cfg)
         })
         local date = Label(gc, {
             AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -18, 0, 46),
-            Size = UDim2.fromOffset(160, 14), TextXAlignment = Enum.TextXAlignment.Right, TextSize = 10,
+            Size = UDim2.fromOffset(160, 14), TextXAlignment = Enum.TextXAlignment.Right, TextSize = 11.5,
             TextColor3 = T.Muted
         })
         local game_ = New("Frame", {
@@ -1781,7 +1781,7 @@ function Flexozy:CreateWindow(cfg)
             Font = Enum.Font.GothamBold, TextSize = 15
         })
         local gBy = Label(game_, {
-            Position = UDim2.fromOffset(118, 52), Size = UDim2.new(1, -134, 0, 14), Text = "", TextSize = 10,
+            Position = UDim2.fromOffset(118, 52), Size = UDim2.new(1, -134, 0, 14), Text = "", TextSize = 11.5,
             TextColor3 = T.Muted
         })
         local function Pill(x, w, text)
@@ -1792,7 +1792,7 @@ function Flexozy:CreateWindow(cfg)
             Round(p, 12)
             Stroke(p, T.Stroke, 1, 0.3)
             return Label(p, {
-                Size = UDim2.fromScale(1, 1), Text = text, TextSize = 9.5,
+                Size = UDim2.fromScale(1, 1), Text = text, TextSize = 11,
                 TextXAlignment = Enum.TextXAlignment.Center, TextColor3 = T.Dim
             })
         end
@@ -1825,7 +1825,7 @@ function Flexozy:CreateWindow(cfg)
             AccentGrad(b, 90)
             local sn = Label(c, {
                 Position = UDim2.fromOffset(22, 12), Size = UDim2.new(1, -30, 0, 14), Text = "",
-                TextSize = 10, TextColor3 = T.Muted
+                TextSize = 11.5, TextColor3 = T.Muted
             })
             Loc(label, "ui", function(t) sn.Text = t end)
             return Label(c, {
@@ -1845,13 +1845,13 @@ function Flexozy:CreateWindow(cfg)
         Stroke(perf, T.Stroke, 1, 0.3)
         local pt = Label(perf, {
             Position = UDim2.fromOffset(16, 12), Size = UDim2.new(0.6, 0, 0, 14), Text = "",
-            Font = Enum.Font.GothamBold, TextSize = 10.5
+            Font = Enum.Font.GothamBold, TextSize = 12
         })
         Loc("Performance (FPS)", "ui", function(t) pt.Text = t end)
         local avgLbl = Label(perf, {
             AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -16, 0, 12),
             Size = UDim2.fromOffset(140, 14), TextXAlignment = Enum.TextXAlignment.Right, Text = "Avg - FPS",
-            TextSize = 10, TextColor3 = T.Dim
+            TextSize = 11.5, TextColor3 = T.Dim
         })
         local chart = New("Frame", {
             Position = UDim2.fromOffset(16, 38), Size = UDim2.new(1, -32, 0, 72), BackgroundTransparency = 1,
@@ -1931,7 +1931,7 @@ function Flexozy:CreateWindow(cfg)
         })
         Label(card, {
             Position = UDim2.fromOffset(88, 44), Size = UDim2.new(1, -200, 0, 14),
-            Text = "discord.gg/" .. code, TextSize = 10, TextColor3 = T.Muted
+            Text = "discord.gg/" .. code, TextSize = 11.5, TextColor3 = T.Muted
         })
 
         local joinB = New("TextButton", {
@@ -1943,7 +1943,7 @@ function Flexozy:CreateWindow(cfg)
         Interact(joinB)
         local jl = Label(joinB, {
             Size = UDim2.fromScale(1, 1), Text = "", TextXAlignment = Enum.TextXAlignment.Center,
-            Font = Enum.Font.GothamBold, TextSize = 11, TextColor3 = WHITE
+            Font = Enum.Font.GothamBold, TextSize = 12.5, TextColor3 = WHITE
         })
         Loc("Join", "func", function(t) jl.Text = t end)
 
@@ -1957,14 +1957,14 @@ function Flexozy:CreateWindow(cfg)
         local function stat(order)
             return Label(row, {
                 Size = UDim2.fromOffset(0, 16), AutomaticSize = Enum.AutomaticSize.X, Text = "", RichText = true,
-                TextSize = 10.5, TextColor3 = T.Dim, TextTruncate = Enum.TextTruncate.None, LayoutOrder = order,
+                TextSize = 12, TextColor3 = T.Dim, TextTruncate = Enum.TextTruncate.None, LayoutOrder = order,
             })
         end
         local lOn, lOff, lAll = stat(1), stat(2), stat(3)
         local lUp = Label(card, {
             AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -16, 0, 88),
             Size = UDim2.fromOffset(90, 16), TextXAlignment = Enum.TextXAlignment.Right, Text = "",
-            TextSize = 9, TextColor3 = T.Muted
+            TextSize = 10.5, TextColor3 = T.Muted
         })
 
         local track = New("Frame", {
@@ -2124,12 +2124,8 @@ function Flexozy:CreateWindow(cfg)
 
         local it = tab:Group("Interface", "Right")
         it:Toggle({
-            Title = "Show FPS / MS pill", Desc = "FPS and ping bar at the top of the screen", Default = W.StatsPill.Visible, Flag = "UI.StatsPill",
-            Callback = function(v) W.StatsPill.Visible = v end,
-        })
-        it:Toggle({
-            Title = "Show floating button", Desc = "Floating button to open/close the menu", Default = true, Flag = "UI.FloatButton",
-            Callback = function(v) W.Float.Visible = v end,
+            Title = "Show FPS / MS pill", Desc = "FPS and ping bar at the top of the screen (click it to open/close the menu)", Default = W._pillPref, Flag = "UI.StatsPill",
+            Callback = function(v) W:SetPillVisible(v) end,
         })
         it:Toggle({
             Title = "Notifications", Default = true, Flag = "UI.Notify",
@@ -2239,11 +2235,11 @@ function Flexozy:CreateWindow(cfg)
         Round(sideBar, 2)
         Label(card, {
             Position = UDim2.fromOffset(20, 8), Size = UDim2.new(1, -34, 0, 16),
-            Text = Tr(n.Title or "Notice", "ui"), Font = Enum.Font.GothamBold, TextSize = 11.5
+            Text = Tr(n.Title or "Notice", "ui"), Font = Enum.Font.GothamBold, TextSize = 13
         })
         Label(card, {
             Position = UDim2.fromOffset(20, 26), Size = UDim2.new(1, -34, 0, 14),
-            Text = Tr(n.Content or "", "ui"), TextSize = 10, TextColor3 = T.Dim
+            Text = Tr(n.Content or "", "ui"), TextSize = 11.5, TextColor3 = T.Dim
         })
         local prog = New("Frame", {
             AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 12, 1, -3),
@@ -2293,6 +2289,7 @@ function Flexozy:CreateWindow(cfg)
         if show == nil then show = not W.Shown end
         if show == W.Shown then return end
         W.Shown = show
+        if W._syncPill then W._syncPill() end
         local target = TargetScale()
         W._tok = (W._tok or 0) + 1
         local tok = W._tok
@@ -2349,18 +2346,7 @@ function Flexozy:CreateWindow(cfg)
         W.Maximized = on
         Apply()
     end)
-    BtnMin.MouseButton1Click:Connect(function()
-        collapsed = not collapsed
-        if collapsed then
-            SetProfile(false)
-            Body.Visible = false
-            W.Maximized = false
-            Apply()
-        else
-            Apply()
-            task.delay(0.12, function() if not collapsed then Body.Visible = true end end)
-        end
-    end)
+    BtnMin.MouseButton1Click:Connect(function() W:Toggle(false) end)
     BtnClose.MouseButton1Click:Connect(function() W:Toggle(false) end)
     function W:Unload()
         if W.Unloaded then return end
@@ -2377,36 +2363,48 @@ function Flexozy:CreateWindow(cfg)
         if Gui then Gui:Destroy() end
     end
     W.Destroy = W.Unload
-    local Float = New("TextButton", {
-        Size = UDim2.fromOffset(50, 50), Position = UDim2.new(0, 24, 0.3, 0), BackgroundColor3 = C(22, 22, 26),
-        Text = mono, Font = Enum.Font.GothamBold, TextSize = 14, TextColor3 = T.Text, AutoButtonColor = false,
+    local PILL_W, PILL_H, CHIP_W = 176, 34, 84
+    local pill = New("TextButton", {
+        AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 14),
+        Size = UDim2.fromOffset(PILL_W, PILL_H), BackgroundColor3 = C(16, 16, 20), BackgroundTransparency = 0.04,
+        BorderSizePixel = 0, Text = "", AutoButtonColor = false, ClipsDescendants = true, ZIndex = 50,
     }, Gui)
-    Round(Float, 13)
-    Interact(Float)
-    local floatStroke = Stroke(Float, T.Accent, 2, 0.1)
-    Themed(function()
-        floatStroke.Color = T.Accent
-        Float.TextColor3 = T.Accent:Lerp(WHITE, 0.55)
-    end)
-    local moved = MakeDraggable(Float, Float, Conn)
-    Float.MouseButton1Click:Connect(function()
-        if moved() then return end
+    Round(pill, 17)
+    local pillStroke = Stroke(pill, T.Stroke, 1.2)
+    Interact(pill, true)
+    local pillTxt = Label(pill, {
+        Position = UDim2.fromOffset(0, 0), Size = UDim2.fromOffset(PILL_W, PILL_H), RichText = true,
+        TextXAlignment = Enum.TextXAlignment.Center, TextSize = 13, Font = Enum.Font.GothamSemibold,
+        TextTruncate = Enum.TextTruncate.None, Text = "", ZIndex = 51,
+    })
+    local chip = New("Frame", {
+        Position = UDim2.fromOffset(PILL_W - 2, 4), Size = UDim2.fromOffset(CHIP_W - 6, PILL_H - 8),
+        BorderSizePixel = 0, ZIndex = 51, Visible = false,
+    }, pill)
+    Round(chip, 13)
+    AccentGrad(chip, 45)
+    local chipTxt = Label(chip, {
+        Size = UDim2.fromScale(1, 1), TextXAlignment = Enum.TextXAlignment.Center, Font = Enum.Font.GothamBold,
+        TextSize = 13, TextColor3 = WHITE, TextTruncate = Enum.TextTruncate.None, Text = "", ZIndex = 52,
+    })
+    Loc("Open", "func", function(t) chipTxt.Text = t .. " +" end)
+    Themed(function() pillStroke.Color = W.Shown and T.Stroke or T.Accent end)
+    W.StatsPill = pill
+    W._pillPref = cfg.StatsPill ~= false
+    function W:SetPillVisible(v) W._pillPref = v and true or false W._syncPill() end
+    function W._syncPill()
+        local hidden = not W.Shown
+        pill.Visible = W._pillPref or hidden
+        chip.Visible = hidden
+        pillStroke.Color = hidden and T.Accent or T.Stroke
+        Tween(pill, 0.25, { Size = UDim2.fromOffset(hidden and (PILL_W + CHIP_W) or PILL_W, PILL_H) })
+    end
+    local pillMoved = MakeDraggable(pill, pill, Conn)
+    pill.MouseButton1Click:Connect(function()
+        if pillMoved() then return end
         W:Toggle()
     end)
-    W.Float = Float
-    ApplyLogo(Float, function() Float.Text = "" end, cfg.FloatLogo or cfg.Logo, 3)
-    local pill = New("Frame", {
-        AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 14),
-        Size = UDim2.fromOffset(150, 30), BackgroundColor3 = C(20, 20, 24), BackgroundTransparency = 0.1,
-        BorderSizePixel = 0, Visible = cfg.StatsPill ~= false
-    }, Gui)
-    Round(pill, 15)
-    Stroke(pill, T.Stroke, 1)
-    local pillTxt = Label(pill, {
-        Size = UDim2.fromScale(1, 1), RichText = true, TextXAlignment = Enum.TextXAlignment.Center,
-        TextSize = 10.5, Text = ""
-    })
-    W.StatsPill = pill
+    W._syncPill()
     local frames, acc = 0, 0
     Conn(RunService.Heartbeat, function(dt)
         frames += 1
@@ -2416,8 +2414,8 @@ function Flexozy:CreateWindow(cfg)
             frames, acc = 0, 0
             local ok, ping = pcall(function() return math.floor(Stats.Network.ServerStatsItem["Data Ping"]:GetValue()) end)
             ping = ok and ping or nil
-            local hx = Hex(T.Accent)
-            pillTxt.Text = ('<font color="%s"><b>%d</b></font> <font color="#8e919b">FPS</font>   |   <font color="%s"><b>%s</b></font> <font color="#8e919b">MS</font>'):format(hx, fps, hx, ping and tostring(ping) or "-")
+            local hx = Hex(T.Accent:Lerp(WHITE, 0.3))
+            pillTxt.Text = ('<font color="%s"><b>%d</b></font> <font color="#d0d3de">FPS</font>   <font color="#6b6e7c">|</font>   <font color="%s"><b>%s</b></font> <font color="#d0d3de">MS</font>'):format(hx, fps, hx, ping and tostring(ping) or "-")
             for _, fn in ipairs(W.Updaters) do pcall(fn, fps, ping) end
         end
     end)
