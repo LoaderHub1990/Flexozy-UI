@@ -13,7 +13,7 @@ local WHITE, BLACK = Color3.new(1, 1, 1), Color3.new(0, 0, 0)
 local function C(r, g, b) return Color3.fromRGB(r, g, b) end
 
 local Flexozy = {
-    Version = "3.4.0",
+    Version = "3.5.0",
     Icons = {
         Grid     = "rbxassetid://10709752035",
         Sword    = "rbxassetid://10709818534",
@@ -326,6 +326,8 @@ local DefaultDict = {
     ["Auto rejoin"] = "เข้าเกมใหม่อัตโนมัติ", ["Rejoin automatically if disconnected or kicked"] = "เข้าเกมใหม่เองเมื่อหลุดหรือโดนเตะ",
     ["Auto-save"] = "เซฟอัตโนมัติ", ["Save settings automatically"] = "เซฟค่าที่ตั้งให้อัตโนมัติ",
     ["Config name"] = "ชื่อคอนฟิก",
+    ["Saved configs"] = "คอนฟิกที่บันทึกไว้", ["Refresh list"] = "รีเฟรชรายการ", ["Reload saved configs"] = "โหลดรายชื่อคอนฟิกใหม่",
+    ["Hide"] = "ซ่อน",
     ["Save config"] = "บันทึกคอนฟิก", ["Save all values to a file"] = "บันทึกค่าทั้งหมดลงไฟล์",
     ["Load config"] = "โหลดคอนฟิก", ["Load values from the file"] = "โหลดค่าจากไฟล์",
     ["Reset UI settings"] = "รีเซ็ตการตั้งค่า UI", ["Restore UI options to default"] = "คืนค่าหมวด UI เป็นค่าเริ่มต้น",
@@ -554,6 +556,22 @@ function Flexozy:CreateWindow(cfg)
         end
         W._loading = false
         W:_queueSave()
+    end
+    function W:ListConfigs()
+        local out, seen = {}, {}
+        if type(listfiles) ~= "function" then return out end
+        pcall(function()
+            for _, p in ipairs(listfiles(W.Folder)) do
+                local s = tostring(p):gsub("\\", "/")
+                local n = s:match("([^/]+)%.json$")
+                if n and not seen[n] and n:sub(1, 5) ~= "logo_" then
+                    seen[n] = true
+                    out[#out + 1] = n
+                end
+            end
+        end)
+        table.sort(out)
+        return out
     end
     local parent = GuiParent()
     pcall(function() local o = parent:FindFirstChild("Flexozy_UI") if o then o:Destroy() end end)
@@ -2315,18 +2333,47 @@ function Flexozy:CreateWindow(cfg)
             Title = "Auto-save", Desc = "Save settings automatically", Default = W.AutoSave, Flag = "UI.AutoSave",
             Callback = function(v) W.AutoSave = v end,
         })
-        cf:Input({
+        local cfgDD, cfgInput
+        local function refreshCfgs()
+            local list = W:ListConfigs()
+            cfgDD.Refresh(list, true)
+            if table.find(list, W.ConfigName) then cfgDD.Set(W.ConfigName, true) end
+            return list
+        end
+        local initialCfgs = W:ListConfigs()
+        cfgDD = cf:Dropdown({
+            Title = "Saved configs", Options = initialCfgs,
+            Default = table.find(initialCfgs, W.ConfigName) and W.ConfigName or nil,
+            Callback = function(v)
+                if v and v ~= "" then
+                    W.ConfigName = v
+                    if cfgInput then cfgInput.Set(v, true) end
+                end
+            end,
+        })
+        cf:Button({
+            Title = "Refresh list", Desc = "Reload saved configs",
+            Callback = function()
+                local list = refreshCfgs()
+                W:Notify({
+                    Title = "Config", Content = Tr("Saved configs", "ui") .. ": " .. tostring(#list), Force = true
+                })
+            end,
+        })
+        cfgInput = cf:Input({
             Title = "Config name", Placeholder = "default", Default = W.ConfigName,
             Callback = function(t)
                 t = tostring(t):gsub("[^%w_%-]", "")
                 if t == "" then t = "default" end
                 W.ConfigName = t
+                refreshCfgs()
             end,
         })
         cf:Button({
             Title = "Save config", Desc = "Save all values to a file",
             Callback = function()
                 local ok, err = W:SaveConfig()
+                if ok then refreshCfgs() end
                 W:Notify({
                     Title = "Config",
                     Content = ok and (Tr("Saved", "ui") .. ": " .. W.ConfigName) or tostring(err),
@@ -2517,42 +2564,97 @@ function Flexozy:CreateWindow(cfg)
         if Gui then Gui:Destroy() end
     end
     W.Destroy = W.Unload
-    local PILL_W, PILL_H, CHIP_W = 176, 34, 84
+    -- top stats pill: status dot | FPS | MS | Hide/Open chip
+    local PILL_W, PILL_H = 240, 40
+    local MID = PILL_H / 2
     local pill = New("TextButton", {
         AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 14),
-        Size = UDim2.fromOffset(PILL_W, PILL_H), BackgroundColor3 = C(16, 16, 19), BackgroundTransparency = 0.04,
+        Size = UDim2.fromOffset(PILL_W, PILL_H), BackgroundColor3 = C(16, 16, 19), BackgroundTransparency = 0.05,
         BorderSizePixel = 0, Text = "", AutoButtonColor = false, ClipsDescendants = true, ZIndex = 50,
     }, Gui)
-    Round(pill, 17)
-    local pillStroke = Stroke(pill, T.Stroke, 1.2)
+    Round(pill, 20)
+    local pillStroke = Rim(pill, { { 0, 0.6 }, { 0.5, 0.85 }, { 1, 0.58 } })
     Interact(pill, true)
-    local pillTxt = Label(pill, {
-        Position = UDim2.fromOffset(0, 0), Size = UDim2.fromOffset(PILL_W, PILL_H), RichText = true,
-        TextXAlignment = Enum.TextXAlignment.Center, TextSize = 13, Font = Enum.Font.GothamSemibold,
-        TextTruncate = Enum.TextTruncate.None, Text = "", ZIndex = 51,
-    })
-    local chip = New("Frame", {
-        Position = UDim2.fromOffset(PILL_W - 2, 4), Size = UDim2.fromOffset(CHIP_W - 6, PILL_H - 8),
-        BorderSizePixel = 0, ZIndex = 51, Visible = false,
+    local pSheen = New("Frame", {
+        Size = UDim2.new(1, 0, 0.6, 0), BackgroundColor3 = WHITE, BorderSizePixel = 0, Active = false, ZIndex = 50,
     }, pill)
-    Round(chip, 13)
+    Round(pSheen, 20)
+    New("UIGradient", {
+        Rotation = 90,
+        Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.9), NumberSequenceKeypoint.new(1, 1) }),
+    }, pSheen)
+    pill.MouseEnter:Connect(function() Tween(pill, 0.2, { BackgroundColor3 = C(26, 26, 31) }) end)
+    pill.MouseLeave:Connect(function() Tween(pill, 0.2, { BackgroundColor3 = C(16, 16, 19) }) end)
+
+    local dotHalo = New("Frame", {
+        AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromOffset(21, MID), Size = UDim2.fromOffset(8, 8),
+        BackgroundColor3 = T.Ok, BackgroundTransparency = 0.6, BorderSizePixel = 0, ZIndex = 51,
+    }, pill)
+    Round(dotHalo, 999)
+    local dot = New("Frame", {
+        AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromOffset(21, MID), Size = UDim2.fromOffset(8, 8),
+        BackgroundColor3 = T.Ok, BorderSizePixel = 0, ZIndex = 52,
+    }, pill)
+    Round(dot, 999)
+    local function PillText(x, w)
+        return Label(pill, {
+            Position = UDim2.fromOffset(x, 0), Size = UDim2.fromOffset(w, PILL_H), RichText = true,
+            TextSize = 14, Font = Enum.Font.GothamSemibold, TextTruncate = Enum.TextTruncate.None,
+            Text = "", ZIndex = 52,
+        })
+    end
+    local fpsTxt = PillText(38, 62)
+    New("Frame", {
+        AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromOffset(106, MID), Size = UDim2.fromOffset(1, 16),
+        BackgroundColor3 = WHITE, BackgroundTransparency = 0.84, BorderSizePixel = 0, ZIndex = 52,
+    }, pill)
+    local msTxt = PillText(118, 56)
+
+    local chip = New("Frame", {
+        AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -6, 0.5, 0), Size = UDim2.fromOffset(60, PILL_H - 12),
+        BorderSizePixel = 0, ZIndex = 52,
+    }, pill)
+    Round(chip, 14)
     AccentGrad(chip, 90)
     local chipTxt = Label(chip, {
         Size = UDim2.fromScale(1, 1), TextXAlignment = Enum.TextXAlignment.Center, Font = Enum.Font.GothamBold,
-        TextSize = 13, TextColor3 = WHITE, TextTruncate = Enum.TextTruncate.None, Text = "", ZIndex = 52,
+        TextSize = 12.5, TextColor3 = WHITE, TextTruncate = Enum.TextTruncate.None, Text = "", ZIndex = 53,
     })
-    Themed(function() chipTxt.TextColor3 = Ink(T.Accent) end)
-    Loc("Open", "func", function(t) chipTxt.Text = t end)
-    Themed(function() pillStroke.Color = W.Shown and T.Stroke or T.Accent end)
+    local function chipText() chipTxt.Text = Tr(W.Shown and "Hide" or "Open", "func") end
+    chipText()
+    table.insert(W.LangFns, chipText)
+    local function chipStyle(animate)
+        local hidden = not W.Shown
+        local bg = hidden and 0 or 0.86
+        local col = hidden and Ink(T.Accent) or T.Text
+        if animate then
+            Tween(chip, 0.25, { BackgroundTransparency = bg })
+            Tween(chipTxt, 0.25, { TextColor3 = col })
+        else
+            chip.BackgroundTransparency = bg
+            chipTxt.TextColor3 = col
+        end
+    end
+    Themed(function()
+        chipStyle(false)
+        pillStroke.Color = W.Shown and WHITE or T.Accent
+    end)
+    Conn(RunService.Heartbeat, function()
+        if not pill.Visible then return end
+        local ph = (tick() % 1.8) / 1.8
+        local s = 8 + 10 * ph
+        dotHalo.Size = UDim2.fromOffset(s, s)
+        dotHalo.BackgroundTransparency = 0.55 + 0.45 * ph
+    end)
     W.StatsPill = pill
     W._pillPref = cfg.StatsPill ~= false
     function W:SetPillVisible(v) W._pillPref = v and true or false W._syncPill() end
     function W._syncPill()
         local hidden = not W.Shown
         pill.Visible = W._pillPref or hidden
-        chip.Visible = hidden
-        pillStroke.Color = hidden and T.Accent or T.Stroke
-        Tween(pill, 0.25, { Size = UDim2.fromOffset(hidden and (PILL_W + CHIP_W) or PILL_W, PILL_H) })
+        pillStroke.Color = hidden and T.Accent or WHITE
+        chipText()
+        chipStyle(true)
     end
     local pillMoved = MakeDraggable(pill, pill, Conn)
     pill.MouseButton1Click:Connect(function()
@@ -2573,7 +2675,12 @@ function Flexozy:CreateWindow(cfg)
             local fpsCol = fps < 25 and T.Danger or (fps < 45 and T.Warn or base)
             local pingCol = (not ping) and base or (ping > 150 and T.Danger or (ping > 90 and T.Warn or base))
             local hx, hp = Hex(fpsCol), Hex(pingCol)
-            pillTxt.Text = ('<font color="%s"><b>%d</b></font> <font color="#d0d3de">FPS</font>   <font color="#6b6e7c">|</font>   <font color="%s"><b>%s</b></font> <font color="#d0d3de">MS</font>'):format(hx, fps, hp, ping and tostring(ping) or "-")
+            fpsTxt.Text = ('<font color="%s"><b>%d</b></font> <font color="#9a9eab" size="11">FPS</font>'):format(hx, fps)
+            msTxt.Text = ('<font color="%s"><b>%s</b></font> <font color="#9a9eab" size="11">MS</font>'):format(hp, ping and tostring(ping) or "-")
+            local health = (fps < 25 or (ping and ping > 150)) and T.Danger
+                or ((fps < 45 or (ping and ping > 90)) and T.Warn or T.Ok)
+            dot.BackgroundColor3 = health
+            dotHalo.BackgroundColor3 = health
             for _, fn in ipairs(W.Updaters) do pcall(fn, fps, ping) end
         end
     end)
