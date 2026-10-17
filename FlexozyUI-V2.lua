@@ -385,6 +385,27 @@ function Flexozy:CreateWindow(cfg)
         end)
         return g
     end
+    -- running light border (same as the original)
+    local function GlowBorder(obj, thick, speed, base)
+        local st = New("UIStroke", {
+            Color = WHITE, Thickness = thick or 1.6, ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+        }, obj)
+        local g = New("UIGradient", {
+            Transparency = NumberSequence.new({
+                NumberSequenceKeypoint.new(0, base or 0.9), NumberSequenceKeypoint.new(0.3, base or 0.9),
+                NumberSequenceKeypoint.new(0.5, 0),
+                NumberSequenceKeypoint.new(0.7, base or 0.9), NumberSequenceKeypoint.new(1, base or 0.9),
+            }),
+        }, st)
+        Themed(function() g.Color = ColorSequence.new(T.Accent:Lerp(WHITE, 0.3)) end)
+        local rot = 0
+        Conn(RunService.Heartbeat, function(dt)
+            if not W.Shown or W.Unloaded then return end
+            rot = (rot + dt * (speed or 70)) % 360
+            g.Rotation = rot
+        end)
+        return st
+    end
     local function Tr(raw, kind)
         local sc = W.LangScope
         local on = sc == "All" or (sc == "Tabs" and kind == "tab") or (sc == "Functions" and kind == "func")
@@ -547,7 +568,7 @@ function Flexozy:CreateWindow(cfg)
         BackgroundTransparency = 0.03, BorderSizePixel = 0,
     }, Gui)
     local mainCorner = Round(Main, 28)
-    Rim(Main, { { 0, 0.76 }, { 0.5, 0.9 }, { 1, 0.7 } })
+    GlowBorder(Main, 1.6, 55, 0.6)
     New("UIGradient", { Color = ColorSequence.new(WHITE, C(208, 208, 220)), Rotation = 90 }, Main)
     W.Main = Main
     local sheen = New("Frame", {
@@ -706,7 +727,7 @@ function Flexozy:CreateWindow(cfg)
         BackgroundColor3 = T.Card, BorderSizePixel = 0, Text = "", AutoButtonColor = false,
     }, Sidebar)
     Round(UserCard, 20)
-    Rim(UserCard)
+    GlowBorder(UserCard, 1.6, 70)
     Interact(UserCard)
     local Avatar = New("ImageLabel", {
         Size = UDim2.fromOffset(36, 36), Position = UDim2.fromOffset(10, 10), BackgroundColor3 = T.Card2,
@@ -1256,6 +1277,7 @@ function Flexozy:CreateWindow(cfg)
                     AutoButtonColor = false
                 }, row)
                 Round(pill, 10)
+                Stroke(pill, T.Stroke, 1, 0.5)
                 Interact(pill, true)
                 local knob = New("Frame", {
                     Size = UDim2.fromOffset(14, 14), Position = UDim2.new(0, 3, 0.5, -7),
@@ -1329,6 +1351,7 @@ function Flexozy:CreateWindow(cfg)
                     Size = UDim2.fromOffset(12, 12), BackgroundColor3 = WHITE, BorderSizePixel = 0
                 }, track)
                 Round(knob, 6)
+                New("UIStroke", { Color = BLACK, Thickness = 2, Transparency = 0.75 }, knob)
                 Themed(function() vl.TextColor3 = T.Accent end)
                 local dragging, pending = false, false
                 local function visual()
