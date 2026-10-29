@@ -1,1 +1,53 @@
 
+-- ตัวอย่างสั้นๆ: โหลด UI จากลิงก์ของคุณ แล้วสร้างหน้าต่าง + การ์ดผู้ใช้ (กรอบเรืองแสง + Popup)
+
+local UI_URL = "https://raw.githubusercontent.com/LoaderHub1990/Flexozy-UI/refs/heads/main/Hey"
+
+local WindUI = loadstring(game:HttpGet(UI_URL))()
+
+local Window = WindUI:CreateWindow({
+    Title  = "My Hub",
+    Author = "ตัวอย่าง",
+    Icon   = "sparkles",
+    Folder = "MyHub",
+    Theme  = "Dark",
+    Size   = UDim2.fromOffset(620, 460),
+    ToggleKey = Enum.KeyCode.RightShift,
+    User = { Enabled = true }, -- เปิดการ์ดผู้ใช้
+})
+
+Window:Tag({ Title = "v1.0", Color = Color3.fromHex("#7c5cff") })
+
+local Main = Window:Tab({ Title = "หน้าหลัก", Icon = "house", ShowTabTitle = true })
+
+Main:Paragraph({
+    Title = "เชื่อมต่อ UI สำเร็จ",
+    Desc  = "กดการ์ดชื่อมุมซ้ายล่างเพื่อดูข้อมูลโปรไฟล์",
+})
+
+Main:Button({
+    Title = "ทดสอบแจ้งเตือน",
+    Icon  = "bell",
+    Callback = function()
+        WindUI:Notify({ Title = "สวัสดี", Content = "UI ทำงานปกติ", Icon = "check", Duration = 3 })
+    end,
+})
+
+Main:Toggle({
+    Title = "ตัวอย่างสวิตช์",
+    Value = false,
+    Callback = function(on)
+        print("Toggle:", on)
+    end,
+})
+
+Main:Slider({
+    Title = "ตัวอย่างสไลเดอร์",
+    Step  = 1,
+    Value = { Min = 0, Max = 100, Default = 50 },
+    Callback = function(v)
+        print("Slider:", v)
+    end,
+})
+
+Window:SelectTab(1)
