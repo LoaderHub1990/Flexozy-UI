@@ -360,6 +360,16 @@ function Flexozy:CreateWindow(cfg)
     local sub    = cfg.SubTitle or "Script Hub"
     local mono   = cfg.Monogram or "FX"
     local size   = cfg.Size or Vector2.new(860, 540)
+    if typeof(size) == "UDim2" then
+        size = Vector2.new(size.X.Offset, size.Y.Offset)
+    elseif typeof(size) == "Vector2" then
+        -- ok
+    elseif type(size) == "table" then
+        size = Vector2.new(tonumber(size[1] or size.X) or 860, tonumber(size[2] or size.Y) or 540)
+    else
+        size = Vector2.new(860, 540)
+    end
+    size = Vector2.new(math.max(size.X, 600), math.max(size.Y, 380))
     local HEADER = 62
     local SIDE_W = 204
     local NAV_TOP = 80
