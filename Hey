@@ -20,7 +20,7 @@ local WHITE, BLACK = Color3.new(1, 1, 1), Color3.new(0, 0, 0)
 local function C(r, g, b) return Color3.fromRGB(r, g, b) end
 
 local Flexozy = {
-    Version = "4.1.0",
+    Version = "4.2.0",
     Icons = {
         Home     = "rbxassetid://98755624629571",
         Grid     = "rbxassetid://81344910161871",
@@ -77,10 +77,10 @@ local Flexozy = {
     AccentNames = { "Silver", "Violet", "Blue", "Cyan", "Green", "Yellow", "Orange", "Red", "Pink" },
 }
 local T = {
-    Window = C(15, 18, 25),
+    Window = C(28, 32, 42),
     Panel  = C(19, 23, 31),
     Card   = C(24, 28, 37),
-    Card2  = C(34, 39, 51),
+    Card2  = C(46, 52, 66),
     Field  = C(17, 20, 27),
     Stroke = C(62, 68, 84),
     Text   = C(250, 250, 252),
@@ -392,7 +392,7 @@ function Flexozy:CreateWindow(cfg)
     local title  = cfg.Title or "Flexozy"
     local sub    = cfg.SubTitle or "Script Hub"
     local mono   = cfg.Monogram or "FX"
-    local size   = cfg.Size or Vector2.new(860, 540)
+    local size   = cfg.Size or Vector2.new(860, 570)
     if typeof(size) == "UDim2" then
         size = Vector2.new(size.X.Offset, size.Y.Offset)
     elseif typeof(size) == "Vector2" then
@@ -403,9 +403,9 @@ function Flexozy:CreateWindow(cfg)
         size = Vector2.new(860, 540)
     end
     size = Vector2.new(math.max(size.X, 600), math.max(size.Y, 380))
-    local HEADER = 62
-    local SIDE_W = 204
-    local NAV_TOP = 80
+    local HEADER = 72
+    local SIDE_W = 232
+    local NAV_TOP = 84
     local startAccent, startName = ToColor(cfg.Accent or "Violet")
     T.Accent = startAccent or Flexozy.Accents.Violet
     local W = {
@@ -633,16 +633,16 @@ function Flexozy:CreateWindow(cfg)
     local Main = New("Frame", {
         Name = "Main", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),
         Size = UDim2.fromOffset(size.X, size.Y), BackgroundColor3 = T.Window,
-        BackgroundTransparency = 0.16, BorderSizePixel = 0,
+        BackgroundTransparency = 0.3, BorderSizePixel = 0,
     }, Gui)
-    local mainCorner = Round(Main, 28)
-    GlowBorder(Main, 1.6, 55, 0.6)
+    local mainCorner = Round(Main, 32)
+    Rim(Main, { { 0, 0.6 }, { 0.5, 0.82 }, { 1, 0.58 } })
     New("UIGradient", { Color = ColorSequence.new(WHITE, C(205, 210, 226)), Rotation = 90 }, Main)
     W.Main = Main
     local sheen = New("Frame", {
         Size = UDim2.new(1, 0, 0, 140), BackgroundColor3 = WHITE, BorderSizePixel = 0, Active = false,
     }, Main)
-    Round(sheen, 28)
+    Round(sheen, 32)
     New("UIGradient", {
         Rotation = 90,
         Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.94), NumberSequenceKeypoint.new(1, 1) }),
@@ -652,11 +652,11 @@ function Flexozy:CreateWindow(cfg)
     local ambient = New("Frame", {
         Size = UDim2.fromScale(1, 1), BackgroundColor3 = WHITE, BorderSizePixel = 0, Active = false,
     }, Main)
-    Round(ambient, 28)
+    Round(ambient, 32)
     local ambientGrad = New("UIGradient", {
         Rotation = 35,
         Transparency = NumberSequence.new({
-            NumberSequenceKeypoint.new(0, 0.82), NumberSequenceKeypoint.new(0.45, 0.97),
+            NumberSequenceKeypoint.new(0, 0.93), NumberSequenceKeypoint.new(0.45, 0.985),
             NumberSequenceKeypoint.new(1, 1),
         }),
     }, ambient)
@@ -668,7 +668,7 @@ function Flexozy:CreateWindow(cfg)
             local cam = workspace.CurrentCamera
             if cam then
                 local vp = cam.ViewportSize
-                s = math.min(s, (vp.X - 120) / size.X, vp.Y * 0.92 / size.Y)
+                s = math.min(s, (vp.X - 60) / size.X, vp.Y * 0.92 / size.Y)
             end
         end
         return math.clamp(s, 0.2, 3)
@@ -725,17 +725,22 @@ function Flexozy:CreateWindow(cfg)
     -- Body + Sidebar (full height, brand on top)
     -- ========================================================
     local Body = New("Frame", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1 }, Main)
-    local Sidebar = New("Frame", {
-        Position = UDim2.fromOffset(10, 10), Size = UDim2.new(0, SIDE_W, 1, -20), BackgroundColor3 = T.Panel,
-        BackgroundTransparency = 0.5, BorderSizePixel = 0
+    local SideClip = New("Frame", {
+        Size = UDim2.new(0, SIDE_W, 1, 0), BackgroundTransparency = 1, BorderSizePixel = 0, ClipsDescendants = true,
     }, Body)
-    Round(Sidebar, 22)
-    Stroke(Sidebar, T.Stroke, 1, 0.35)
+    local SideBg = New("Frame", {
+        Size = UDim2.new(0, SIDE_W + 60, 1, 0), BackgroundColor3 = C(11, 14, 21),
+        BackgroundTransparency = 0.12, BorderSizePixel = 0,
+    }, SideClip)
+    local sideCorner = Round(SideBg, 32)
+    local Sidebar = New("Frame", {
+        Size = UDim2.new(0, SIDE_W, 1, 0), BackgroundTransparency = 1, BorderSizePixel = 0,
+    }, Body)
 
     local Brand = New("Frame", { Size = UDim2.new(1, 0, 0, NAV_TOP), BackgroundTransparency = 1 }, Sidebar)
     MakeDraggable(Brand, Main, Conn, function() return not W.Maximized end)
     local Logo = New("Frame", {
-        Size = UDim2.fromOffset(42, 42), Position = UDim2.fromOffset(14, 16), BorderSizePixel = 0
+        Size = UDim2.fromOffset(38, 38), Position = UDim2.fromOffset(22, 22), BorderSizePixel = 0
     }, Brand)
     Round(Logo, 12)
     AccentGrad(Logo, 45)
@@ -749,11 +754,11 @@ function Flexozy:CreateWindow(cfg)
         Logo.BackgroundTransparency = 1
     end, cfg.Logo, 0, 10)
     Label(Brand, {
-        Position = UDim2.fromOffset(66, 15), Size = UDim2.new(1, -76, 0, 22), Text = title,
-        Font = Enum.Font.GothamBold, TextSize = 16
+        Position = UDim2.fromOffset(72, 17), Size = UDim2.new(1, -82, 0, 22), Text = title,
+        Font = Enum.Font.GothamBold, TextSize = 17
     })
     local brow = New("Frame", {
-        Position = UDim2.fromOffset(66, 40), Size = UDim2.new(1, -72, 0, 18), BackgroundTransparency = 1
+        Position = UDim2.fromOffset(72, 44), Size = UDim2.new(1, -78, 0, 18), BackgroundTransparency = 1
     }, Brand)
     New("UIListLayout", {
         FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 6),
@@ -776,41 +781,40 @@ function Flexozy:CreateWindow(cfg)
         badgeLbl.TextColor3 = T.Accent:Lerp(WHITE, 0.4)
     end)
     Label(brow, {
-        Size = UDim2.fromOffset(82, 18), Text = sub, TextSize = 11, TextColor3 = T.Muted, LayoutOrder = 2
+        Size = UDim2.fromOffset(112, 18), Text = sub, TextSize = 11, TextColor3 = T.Muted, LayoutOrder = 2
     })
 
     local Nav = New("ScrollingFrame", {
-        Position = UDim2.fromOffset(6, NAV_TOP), Size = UDim2.new(1, -12, 1, -NAV_TOP - 70),
+        Position = UDim2.fromOffset(10, NAV_TOP), Size = UDim2.new(1, -20, 1, -NAV_TOP - 84),
         BackgroundTransparency = 1, BorderSizePixel = 0, ScrollBarThickness = 2,
-        ScrollBarImageColor3 = T.Stroke, AutomaticCanvasSize = Enum.AutomaticSize.Y, CanvasSize = UDim2.new(),
+        ScrollBarImageColor3 = T.Muted, AutomaticCanvasSize = Enum.AutomaticSize.Y, CanvasSize = UDim2.new(),
     }, Sidebar)
-    New("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 4) }, Nav)
+    New("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 5) }, Nav)
     local navOrder = 0
     local function NextNav() navOrder += 1 return navOrder end
     local UserCard = New("TextButton", {
-        AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 8, 1, -8), Size = UDim2.new(1, -16, 0, 56),
-        BackgroundColor3 = T.Card2, BackgroundTransparency = 0.1, BorderSizePixel = 0, Text = "", AutoButtonColor = false,
+        AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 10, 1, -10), Size = UDim2.new(1, -20, 0, 62),
+        BackgroundColor3 = T.Card2, BackgroundTransparency = 0.5, BorderSizePixel = 0, Text = "", AutoButtonColor = false,
     }, Sidebar)
-    Round(UserCard, 20)
-    Stroke(UserCard, T.Stroke, 1, 0.4)
+    Round(UserCard, 22)
     Interact(UserCard)
     local Avatar = New("ImageLabel", {
-        Size = UDim2.fromOffset(36, 36), Position = UDim2.fromOffset(10, 10), BackgroundColor3 = T.Card2,
+        Size = UDim2.fromOffset(40, 40), Position = UDim2.fromOffset(11, 11), BackgroundColor3 = T.Card2,
         Image = "rbxthumb://type=AvatarHeadShot&id=" .. tostring(LP.UserId) .. "&w=150&h=150",
     }, UserCard)
-    Round(Avatar, 18)
+    Round(Avatar, 20)
     local Dot = New("Frame", {
-        Size = UDim2.fromOffset(10, 10), Position = UDim2.fromOffset(38, 37), BackgroundColor3 = T.Ok,
+        Size = UDim2.fromOffset(11, 11), Position = UDim2.fromOffset(40, 41), BackgroundColor3 = T.Ok,
         BorderSizePixel = 0
     }, UserCard)
     Round(Dot, 5)
     Stroke(Dot, T.Card2, 2)
     Label(UserCard, {
-        Position = UDim2.fromOffset(54, 12), Size = UDim2.new(1, -82, 0, 16), Text = LP.DisplayName,
+        Position = UDim2.fromOffset(62, 14), Size = UDim2.new(1, -92, 0, 16), Text = LP.DisplayName,
         Font = Enum.Font.GothamBold, TextSize = 13
     })
     Label(UserCard, {
-        Position = UDim2.fromOffset(54, 29), Size = UDim2.new(1, -82, 0, 14), Text = cfg.UserSub or ("@" .. LP.Name),
+        Position = UDim2.fromOffset(62, 33), Size = UDim2.new(1, -92, 0, 14), Text = cfg.UserSub or ("@" .. LP.Name),
         TextSize = 11, TextColor3 = T.Muted
     })
     Label(UserCard, {
@@ -819,7 +823,7 @@ function Flexozy:CreateWindow(cfg)
     })
 
     local Pop = New("Frame", {
-        Name = "ProfilePopup", AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 20, 1, -86),
+        Name = "ProfilePopup", AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 16, 1, -88),
         Size = UDim2.fromOffset(250, 0), AutomaticSize = Enum.AutomaticSize.Y,
         BackgroundColor3 = C(18, 21, 28), BorderSizePixel = 0, Visible = false, ZIndex = 30,
     }, Main)
@@ -915,20 +919,20 @@ function Flexozy:CreateWindow(cfg)
     local function GetFooter()
         if not Footer then
             Footer = New("Frame", {
-                AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 6, 1, -70),
-                Size = UDim2.new(1, -12, 0, 0), AutomaticSize = Enum.AutomaticSize.Y,
+                AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 10, 1, -82),
+                Size = UDim2.new(1, -20, 0, 0), AutomaticSize = Enum.AutomaticSize.Y,
                 BackgroundTransparency = 1
             }, Sidebar)
             New("UIListLayout", {
                 SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 4),
                 VerticalAlignment = Enum.VerticalAlignment.Bottom
             }, Footer)
-            Nav.Size = UDim2.new(1, -12, 1, -NAV_TOP - 70 - 50)
+            Nav.Size = UDim2.new(1, -20, 1, -NAV_TOP - 84 - 54)
         end
         return Footer
     end
     local Content = New("Frame", {
-        Position = UDim2.fromOffset(SIDE_W + 20, HEADER), Size = UDim2.new(1, -(SIDE_W + 30), 1, -(HEADER + 16)),
+        Position = UDim2.fromOffset(SIDE_W + 12, HEADER + 4), Size = UDim2.new(1, -(SIDE_W + 24), 1, -(HEADER + 18)),
         BackgroundTransparency = 1
     }, Body)
 
@@ -936,17 +940,17 @@ function Flexozy:CreateWindow(cfg)
     -- Header: active tab title + search + min / max / close
     -- ========================================================
     local Header = New("Frame", {
-        Position = UDim2.fromOffset(SIDE_W + 20, 0), Size = UDim2.new(1, -(SIDE_W + 30), 0, HEADER),
+        Position = UDim2.fromOffset(SIDE_W + 12, 0), Size = UDim2.new(1, -(SIDE_W + 24), 0, HEADER),
         BackgroundTransparency = 1
     }, Main)
     MakeDraggable(Header, Main, Conn, function() return not W.Maximized end)
 
     local hIcon = New("ImageLabel", {
-        Position = UDim2.fromOffset(2, (HEADER - 26) / 2), Size = UDim2.fromOffset(26, 26),
+        Position = UDim2.fromOffset(14, (HEADER - 24) / 2), Size = UDim2.fromOffset(24, 24),
         BackgroundTransparency = 1, Image = "", ImageColor3 = T.Text,
     }, Header)
     local hT = Label(Header, {
-        Position = UDim2.fromOffset(40, 0), Size = UDim2.new(1, -300, 1, 0), Text = "",
+        Position = UDim2.fromOffset(50, 0), Size = UDim2.new(1, -340, 1, 0), Text = "",
         Font = Enum.Font.GothamBold, TextSize = 22,
     })
     local headerTab
@@ -961,74 +965,45 @@ function Flexozy:CreateWindow(cfg)
         updateHeader()
     end
 
-    -- window controls live OUTSIDE the window (floating dock on the right edge)
-    local Dock = New("Frame", {
-        AnchorPoint = Vector2.new(0, 0), Position = UDim2.new(1, 12, 0, 18),
-        Size = UDim2.fromOffset(0, 0), AutomaticSize = Enum.AutomaticSize.XY,
-        BackgroundColor3 = C(16, 19, 26), BackgroundTransparency = 0.2, BorderSizePixel = 0, ZIndex = 25,
-    }, Main)
-    Round(Dock, 23)
-    Rim(Dock, { { 0, 0.55 }, { 0.5, 0.8 }, { 1, 0.5 } })
-    New("UIPadding", {
-        PaddingTop = UDim.new(0, 6), PaddingBottom = UDim.new(0, 6),
-        PaddingLeft = UDim.new(0, 6), PaddingRight = UDim.new(0, 6),
-    }, Dock)
-    local dockLayout = New("UIListLayout", {
-        SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 6),
-        FillDirection = Enum.FillDirection.Vertical,
-    }, Dock)
-    W.Dock = Dock
-    local function DockMode(full)
-        if full then
-            Dock.AnchorPoint = Vector2.new(1, 0)
-            Dock.Position = UDim2.new(1, -12, 0, 8)
-            dockLayout.FillDirection = Enum.FillDirection.Horizontal
-            Header.Size = UDim2.new(1, -(SIDE_W + 30) - 130, 0, HEADER)
-        else
-            Dock.AnchorPoint = Vector2.new(0, 0)
-            Dock.Position = UDim2.new(1, 12, 0, 18)
-            dockLayout.FillDirection = Enum.FillDirection.Vertical
-            Header.Size = UDim2.new(1, -(SIDE_W + 30), 0, HEADER)
-        end
-    end
-    local function HeaderButton(order)
+    -- window controls INSIDE the header (flat icons, RVX style)
+    local function HeaderButton(xFromRight)
         local b = New("TextButton", {
-            Size = UDim2.fromOffset(34, 34), BackgroundColor3 = T.Card2, BackgroundTransparency = 0.25,
-            Text = "", AutoButtonColor = false, LayoutOrder = order, ZIndex = 26,
-        }, Dock)
-        Round(b, 17)
-        Interact(b)
-        b.MouseEnter:Connect(function() Tween(b, 0.15, { BackgroundTransparency = 0 }) end)
-        b.MouseLeave:Connect(function() Tween(b, 0.15, { BackgroundTransparency = 0.25 }) end)
+            Size = UDim2.fromOffset(24, 24), Position = UDim2.new(1, xFromRight, 0, (HEADER - 24) / 2),
+            BackgroundColor3 = WHITE, BackgroundTransparency = 1, Text = "", AutoButtonColor = false,
+        }, Header)
+        Round(b, 12)
+        Interact(b, true)
+        b.MouseEnter:Connect(function() Tween(b, 0.15, { BackgroundTransparency = 0.88 }) end)
+        b.MouseLeave:Connect(function() Tween(b, 0.15, { BackgroundTransparency = 1 }) end)
         return b
     end
-    local BtnMin = HeaderButton(1)
-    local BtnMax = HeaderButton(2)
-    local BtnClose = HeaderButton(3)
+    local BtnClose = HeaderButton(-26)
+    local BtnMax = HeaderButton(-50)
+    local BtnMin = HeaderButton(-74)
     local dash = New("Frame", {
         AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),
-        Size = UDim2.fromOffset(12, 2.5), BackgroundColor3 = T.Text, BorderSizePixel = 0
+        Size = UDim2.fromOffset(11, 2.2), BackgroundColor3 = T.Dim, BorderSizePixel = 0
     }, BtnMin)
     Round(dash, 1)
     local sq = New("Frame", {
         AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),
-        Size = UDim2.fromOffset(11, 11), BackgroundTransparency = 1
+        Size = UDim2.fromOffset(10, 10), BackgroundTransparency = 1
     }, BtnMax)
     Round(sq, 3)
-    Stroke(sq, T.Text, 1.5)
-    IBar(BtnClose, 17, 17, 14, 2, T.Text, 45)
-    IBar(BtnClose, 17, 17, 14, 2, T.Text, -45)
+    Stroke(sq, T.Dim, 1.5)
+    IBar(BtnClose, 12, 12, 13, 2, T.Dim, 45)
+    IBar(BtnClose, 12, 12, 13, 2, T.Dim, -45)
 
     local SearchWrap = New("Frame", {
-        AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -4, 0, (HEADER - 34) / 2),
-        Size = UDim2.fromOffset(230, 34), BackgroundColor3 = T.Field, BorderSizePixel = 0,
+        AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -86, 0, (HEADER - 40) / 2),
+        Size = UDim2.fromOffset(230, 40), BackgroundColor3 = T.Field, BackgroundTransparency = 0.25, BorderSizePixel = 0,
     }, Header)
-    Round(SearchWrap, 17)
+    Round(SearchWrap, 20)
     local sbStroke = Stroke(SearchWrap, T.Stroke, 1, 0.3)
-    IRing(SearchWrap, 13, 10, 11, 11, 5.5, T.Muted, 1.5)
-    IBar(SearchWrap, 24, 22, 6, 1.6, T.Muted, 45)
+    IRing(SearchWrap, 15, 13, 12, 12, 6, T.Muted, 1.5)
+    IBar(SearchWrap, 28, 26, 6, 1.6, T.Muted, 45)
     local SearchBox = New("TextBox", {
-        Position = UDim2.fromOffset(36, 0), Size = UDim2.new(1, -46, 1, 0), BackgroundTransparency = 1,
+        Position = UDim2.fromOffset(42, 0), Size = UDim2.new(1, -52, 1, 0), BackgroundTransparency = 1,
         Text = "", PlaceholderText = "", PlaceholderColor3 = T.Muted, Font = Enum.Font.GothamMedium, TextSize = 12.5,
         TextColor3 = T.Text, ClearTextOnFocus = false, TextXAlignment = Enum.TextXAlignment.Left,
     }, SearchWrap)
@@ -1242,16 +1217,16 @@ function Flexozy:CreateWindow(cfg)
         local bStroke = Stroke(btn, T.Stroke, 1, 1)
         Interact(btn)
         local bar = New("Frame", {
-            Size = UDim2.fromOffset(3, 18), Position = UDim2.new(0, 6, 0.5, -9), BackgroundColor3 = T.Accent,
+            Size = UDim2.fromOffset(3, 20), Position = UDim2.new(0, 5, 0.5, -10), BackgroundColor3 = T.Accent,
             BorderSizePixel = 0, Visible = false
         }, btn)
         Round(bar, 2)
         local icon = New("ImageLabel", {
-            Size = UDim2.fromOffset(20, 20), Position = UDim2.new(0, 20, 0.5, -10), BackgroundTransparency = 1,
+            Size = UDim2.fromOffset(20, 20), Position = UDim2.new(0, 17, 0.5, -10), BackgroundTransparency = 1,
             Image = Tab.IconId, ImageColor3 = T.Dim
         }, btn)
         local name = Label(btn, {
-            Position = UDim2.fromOffset(50, 0), Size = UDim2.new(1, -56, 1, 0), Text = "", TextColor3 = T.Dim,
+            Position = UDim2.fromOffset(52, 0), Size = UDim2.new(1, -58, 1, 0), Text = "", TextColor3 = T.Dim,
             TextSize = 14, Font = Enum.Font.GothamSemibold
         })
         Loc(tcfg.Title or "Tab", "tab", function(t) name.Text = t end)
@@ -1275,7 +1250,7 @@ function Flexozy:CreateWindow(cfg)
             active = on
             Page.Visible = on
             bar.Visible = on
-            Tween(btn, 0.18, { BackgroundTransparency = on and 0.82 or 1 })
+            Tween(btn, 0.18, { BackgroundTransparency = on and 0.76 or 1 })
             Tween(bStroke, 0.18, { Transparency = on and 0.7 or 1, Color = on and T.Accent or T.Stroke })
             Tween(name, 0.18, { TextColor3 = on and T.Text or T.Dim })
             Tween(icon, 0.18, { ImageColor3 = on and T.Accent or T.Dim })
@@ -1327,40 +1302,40 @@ function Flexozy:CreateWindow(cfg)
             end
             local card = New("Frame", {
                 Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y,
-                BackgroundColor3 = T.Card, BackgroundTransparency = 0.62, BorderSizePixel = 0, LayoutOrder = self:_ord(),
+                BackgroundColor3 = C(16, 20, 28), BackgroundTransparency = 0.78, BorderSizePixel = 0, LayoutOrder = self:_ord(),
             }, host)
-            Round(card, 24)
-            Stroke(card, T.Stroke, 1, 0.25)
+            Round(card, 26)
+            New("UIStroke", { Color = WHITE, Thickness = 1, Transparency = 0.84, ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, card)
             New("UIPadding", {
-                PaddingTop = UDim.new(0, 10), PaddingBottom = UDim.new(0, 12), PaddingLeft = UDim.new(0, 10),
-                PaddingRight = UDim.new(0, 10)
+                PaddingTop = UDim.new(0, 8), PaddingBottom = UDim.new(0, 10), PaddingLeft = UDim.new(0, 8),
+                PaddingRight = UDim.new(0, 8)
             }, card)
-            New("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 10) }, card)
+            New("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 12) }, card)
             local n = 0
             local function ord() n += 1 return n end
             local gh, arrow
             local collapsible = gtitle ~= nil and gopts.Collapsible ~= false
             if gtitle then
                 gh = New("TextButton", {
-                    Size = UDim2.new(1, 0, 0, 40), BackgroundColor3 = T.Card2, BackgroundTransparency = 0.45,
+                    Size = UDim2.new(1, 0, 0, 50), BackgroundColor3 = T.Card2, BackgroundTransparency = 0.5,
                     BorderSizePixel = 0, AutoButtonColor = false, Text = "", LayoutOrder = 0,
                 }, card)
-                Round(gh, 18)
+                Round(gh, 22)
                 local gl = Label(gh, {
-                    Position = UDim2.fromOffset(16, 0), Size = UDim2.new(1, -48, 1, 0), Text = "",
-                    Font = Enum.Font.GothamBold, TextSize = 13
+                    Position = UDim2.fromOffset(18, 0), Size = UDim2.new(1, -56, 1, 0), Text = "",
+                    Font = Enum.Font.GothamBold, TextSize = 14
                 })
                 Loc(gtitle, "func", function(t) gl.Text = t end)
                 if collapsible then
                     arrow = New("Frame", {
-                        AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -16, 0.5, 0),
+                        AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -22, 0.5, 0),
                         Size = UDim2.fromOffset(14, 14), BackgroundTransparency = 1,
                     }, gh)
                     IBar(arrow, 4.3, 7, 8, 1.8, T.Dim, 40)
                     IBar(arrow, 9.7, 7, 8, 1.8, T.Dim, -40)
                 end
                 gh.MouseEnter:Connect(function() Tween(gh, 0.15, { BackgroundTransparency = 0.25 }) end)
-                gh.MouseLeave:Connect(function() Tween(gh, 0.15, { BackgroundTransparency = 0.45 }) end)
+                gh.MouseLeave:Connect(function() Tween(gh, 0.15, { BackgroundTransparency = 0.5 }) end)
             end
             local G = { Card = card }
             local collapsed = false
@@ -1564,7 +1539,7 @@ function Flexozy:CreateWindow(cfg)
                 end
                 local open = false
                 local DH = o.Desc and 20 or 0
-                local CLOSED, ITEM, MAXV = 54 + DH, 30, 6
+                local CLOSED, ITEM, MAXV = 62 + DH, 30, 6
                 local function listH() return math.min(#options, MAXV) * ITEM end
                 local row = New("Frame", {
                     Size = UDim2.new(1, 0, 0, CLOSED), BackgroundTransparency = 1, ClipsDescendants = true,
@@ -1575,31 +1550,31 @@ function Flexozy:CreateWindow(cfg)
                 })
                 Loc(o.Title or "Dropdown", "func", function(t) tl.Text = t end)
                 local box = New("TextButton", {
-                    Position = UDim2.fromOffset(0, 18), Size = UDim2.new(1, 0, 0, 32),
-                    BackgroundColor3 = T.Field, Text = "", AutoButtonColor = false
+                    Position = UDim2.fromOffset(0, 22), Size = UDim2.new(1, 0, 0, 40),
+                    BackgroundColor3 = T.Field, BackgroundTransparency = 0.3, Text = "", AutoButtonColor = false
                 }, row)
-                Round(box, 16)
+                Round(box, 20)
                 Stroke(box, T.Stroke, 1, 0.3)
                 Interact(box)
                 if o.Desc then
                     local dl = Label(row, {
-                        Position = UDim2.fromOffset(2, 54), Size = UDim2.new(1, -2, 0, 16), Text = "",
-                        TextSize = 11, TextColor3 = T.Muted
+                        Position = UDim2.fromOffset(4, 66), Size = UDim2.new(1, -4, 0, 16), Text = "",
+                        TextSize = 11.5, TextColor3 = T.Muted
                     })
                     Loc(o.Desc, "func", function(t) dl.Text = t end)
                 end
                 local vl = Label(box, {
-                    Position = UDim2.fromOffset(14, 0), Size = UDim2.new(1, -38, 1, 0), Text = "",
+                    Position = UDim2.fromOffset(18, 0), Size = UDim2.new(1, -46, 1, 0), Text = "",
                     Font = Enum.Font.GothamSemibold, TextSize = 12.5
                 })
                 local arrowD = New("Frame", {
-                    AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -14, 0.5, 0),
+                    AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -18, 0.5, 0),
                     Size = UDim2.fromOffset(14, 14), BackgroundTransparency = 1,
                 }, box)
                 IBar(arrowD, 4.3, 7, 8, 1.8, T.Dim, 40)
                 IBar(arrowD, 9.7, 7, 8, 1.8, T.Dim, -40)
                 local list = New("ScrollingFrame", {
-                    Position = UDim2.fromOffset(0, 56 + DH), Size = UDim2.new(1, 0, 0, listH()), BackgroundTransparency = 1, BorderSizePixel = 0,
+                    Position = UDim2.fromOffset(0, 66 + DH), Size = UDim2.new(1, 0, 0, listH()), BackgroundTransparency = 1, BorderSizePixel = 0,
                     ScrollBarThickness = 2, ScrollBarImageColor3 = T.Stroke, AutomaticCanvasSize = Enum.AutomaticSize.Y, CanvasSize = UDim2.new(),
                 }, row)
                 New("UIListLayout", { Padding = UDim.new(0, 2) }, list)
@@ -1733,27 +1708,27 @@ function Flexozy:CreateWindow(cfg)
                     Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y,
                     BackgroundTransparency = 1, LayoutOrder = ord()
                 }, card)
-                New("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 6) }, wrap)
+                New("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 8) }, wrap)
                 local b = New("TextButton", {
-                    Size = UDim2.new(1, 0, 0, 42), BackgroundColor3 = T.Card2, BackgroundTransparency = 0.35, Text = "",
+                    Size = UDim2.new(1, 0, 0, 50), BackgroundColor3 = T.Card2, BackgroundTransparency = 0.5, Text = "",
                     AutoButtonColor = false, LayoutOrder = 1
                 }, wrap)
-                Round(b, 18)
-                local bs = Stroke(b, T.Stroke, 1, 0.3)
+                Round(b, 20)
+                local bs = Stroke(b, T.Stroke, 1, 0.8)
                 Interact(b)
                 local tl = Label(b, {
                     Size = UDim2.fromScale(1, 1), Text = "", Font = Enum.Font.GothamBold,
-                    TextSize = 13, TextXAlignment = Enum.TextXAlignment.Center
+                    TextSize = 14, TextXAlignment = Enum.TextXAlignment.Center
                 })
                 local setTl = Loc(o.Title or "Button", "func", function(t) tl.Text = t end)
                 local dl, setDl
                 if o.Desc then
                     dl = Label(wrap, {
                         Size = UDim2.new(1, 0, 0, 14), AutomaticSize = Enum.AutomaticSize.Y, Text = "",
-                        TextSize = 11, TextColor3 = T.Muted, TextWrapped = true,
+                        TextSize = 11.5, TextColor3 = T.Muted, TextWrapped = true,
                         TextTruncate = Enum.TextTruncate.None, LayoutOrder = 2
                     })
-                    New("UIPadding", { PaddingLeft = UDim.new(0, 8), PaddingRight = UDim.new(0, 8), PaddingBottom = UDim.new(0, 2) }, dl)
+                    New("UIPadding", { PaddingLeft = UDim.new(0, 14), PaddingRight = UDim.new(0, 10), PaddingBottom = UDim.new(0, 2) }, dl)
                     setDl = Loc(o.Desc, "func", function(t) dl.Text = t end)
                 end
                 b.MouseEnter:Connect(function()
@@ -1762,7 +1737,7 @@ function Flexozy:CreateWindow(cfg)
                 end)
                 b.MouseLeave:Connect(function()
                     Tween(b, 0.18, { BackgroundColor3 = T.Card2 })
-                    Tween(bs, 0.18, { Color = T.Stroke, Transparency = 0.3 })
+                    Tween(bs, 0.18, { Color = T.Stroke, Transparency = 0.8 })
                 end)
                 b.MouseButton1Click:Connect(function() task.spawn(cb) end)
                 return {
@@ -1776,26 +1751,26 @@ function Flexozy:CreateWindow(cfg)
                 local cb = o.Callback
                 local DH = o.Desc and 20 or 0
                 local row = New("Frame", {
-                    Size = UDim2.new(1, 0, 0, 54 + DH), BackgroundTransparency = 1, LayoutOrder = ord()
+                    Size = UDim2.new(1, 0, 0, 62 + DH), BackgroundTransparency = 1, LayoutOrder = ord()
                 }, card)
                 local tl = Label(row, {
                     Size = UDim2.new(1, 0, 0, 14), Text = "", TextSize = 12.5, Font = Enum.Font.GothamSemibold
                 })
                 Loc(o.Title or "Input", "func", function(t) tl.Text = t end)
                 local tb = New("TextBox", {
-                    Position = UDim2.fromOffset(0, 18), Size = UDim2.new(1, 0, 0, 34), BackgroundColor3 = T.Field,
+                    Position = UDim2.fromOffset(0, 22), Size = UDim2.new(1, 0, 0, 40), BackgroundColor3 = T.Field, BackgroundTransparency = 0.3,
                     Text = o.Default or "", PlaceholderText = "", PlaceholderColor3 = T.Muted,
                     Font = Enum.Font.GothamMedium, TextSize = 12.5, TextColor3 = T.Text, ClearTextOnFocus = false,
                     TextXAlignment = Enum.TextXAlignment.Left,
                 }, row)
-                Round(tb, 17)
+                Round(tb, 20)
                 local ts = Stroke(tb, T.Stroke, 1, 0.3)
-                New("UIPadding", { PaddingLeft = UDim.new(0, 14), PaddingRight = UDim.new(0, 14) }, tb)
+                New("UIPadding", { PaddingLeft = UDim.new(0, 18), PaddingRight = UDim.new(0, 16) }, tb)
                 Loc(o.Placeholder or "", "func", function(t) tb.PlaceholderText = t end)
                 if o.Desc then
                     local dl = Label(row, {
-                        Position = UDim2.fromOffset(2, 56), Size = UDim2.new(1, -2, 0, 16), Text = "",
-                        TextSize = 11, TextColor3 = T.Muted
+                        Position = UDim2.fromOffset(4, 66), Size = UDim2.new(1, -4, 0, 16), Text = "",
+                        TextSize = 11.5, TextColor3 = T.Muted
                     })
                     Loc(o.Desc, "func", function(t) dl.Text = t end)
                 end
@@ -1884,19 +1859,19 @@ function Flexozy:CreateWindow(cfg)
                 local o = Opts({ "Title", "Content" }, ...)
                 local row = New("Frame", {
                     Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y,
-                    BackgroundColor3 = T.Card2, BackgroundTransparency = 0.45, BorderSizePixel = 0, LayoutOrder = ord()
+                    BackgroundColor3 = T.Card2, BackgroundTransparency = 0.55, BorderSizePixel = 0, LayoutOrder = ord()
                 }, card)
-                Round(row, 18)
+                Round(row, 20)
                 New("UIPadding", {
-                    PaddingTop = UDim.new(0, 12), PaddingBottom = UDim.new(0, 12),
-                    PaddingLeft = UDim.new(0, 14), PaddingRight = UDim.new(0, 14)
+                    PaddingTop = UDim.new(0, 14), PaddingBottom = UDim.new(0, 14),
+                    PaddingLeft = UDim.new(0, 16), PaddingRight = UDim.new(0, 16)
                 }, row)
                 New("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 4) }, row)
                 local setT
                 if o.Title then
                     local tl = Label(row, {
-                        Size = UDim2.new(1, 0, 0, 18), Text = "", Font = Enum.Font.GothamBold,
-                        TextSize = 13.5, LayoutOrder = 1
+                        Size = UDim2.new(1, 0, 0, 20), Text = "", Font = Enum.Font.GothamBold,
+                        TextSize = 14.5, LayoutOrder = 1
                     })
                     setT = Loc(o.Title, "func", function(t) tl.Text = t end)
                 end
@@ -2425,7 +2400,7 @@ function Flexozy:CreateWindow(cfg)
             Callback = function(v) W:SetAccent(v) end,
         })
         ap:Slider({
-            Title = "Window opacity", Min = 40, Max = 100, Step = 1, Default = 84, Suffix = "%", Flag = "UI.Opacity",
+            Title = "Window opacity", Min = 40, Max = 100, Step = 1, Default = 70, Suffix = "%", Flag = "UI.Opacity",
             Callback = function(v) W:SetOpacity(v / 100) end,
         })
 
@@ -2677,7 +2652,6 @@ function Flexozy:CreateWindow(cfg)
     end
     local function Apply()
         local full = W.Maximized == true
-        DockMode(full)
         local w, h
         if full then local v = VP() w, h = v.X, v.Y else w, h = size.X, size.Y end
         if collapsed then h = HEADER end
@@ -2690,7 +2664,8 @@ function Flexozy:CreateWindow(cfg)
         end
         Tween(Main, 0.28, goal)
         Tween(Scale, 0.28, { Scale = TargetScale() }, Enum.EasingStyle.Quad)
-        Tween(mainCorner, 0.28, { CornerRadius = UDim.new(0, full and 0 or 28) })
+        Tween(mainCorner, 0.28, { CornerRadius = UDim.new(0, full and 0 or 32) })
+        Tween(sideCorner, 0.28, { CornerRadius = UDim.new(0, full and 0 or 32) })
     end
     BtnMax.MouseButton1Click:Connect(function()
         local on = not W.Maximized
@@ -2708,12 +2683,12 @@ function Flexozy:CreateWindow(cfg)
     -- Bottom drag handle + corner resize grip
     -- ========================================================
     local DragBar = New("TextButton", {
-        AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -2), Size = UDim2.fromOffset(170, 14),
+        AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 1, 4), Size = UDim2.fromOffset(170, 18),
         BackgroundTransparency = 1, Text = "", AutoButtonColor = false, ZIndex = 18,
     }, Main)
     local dragPill = New("Frame", {
-        AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.fromOffset(130, 4),
-        BackgroundColor3 = WHITE, BackgroundTransparency = 0.78, BorderSizePixel = 0, ZIndex = 18,
+        AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.fromOffset(104, 4),
+        BackgroundColor3 = WHITE, BackgroundTransparency = 0.68, BorderSizePixel = 0, ZIndex = 18,
     }, DragBar)
     Round(dragPill, 2)
     DragBar.MouseEnter:Connect(function() Tween(dragPill, 0.15, { BackgroundTransparency = 0.5 }) end)
@@ -2721,20 +2696,20 @@ function Flexozy:CreateWindow(cfg)
     MakeDraggable(DragBar, Main, Conn, function() return not W.Maximized end)
 
     local arc = New("Frame", {
-        AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(1, -4, 1, -4), Size = UDim2.fromOffset(46, 46),
+        AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(1, -8, 1, -8), Size = UDim2.fromOffset(76, 76),
         BackgroundTransparency = 1, ZIndex = 19,
     }, Main)
-    Round(arc, 23)
+    Round(arc, 38)
     local arcStroke = New("UIStroke", { Color = WHITE, Thickness = 2, ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, arc)
     New("UIGradient", {
         Rotation = 45,
         Transparency = NumberSequence.new({
-            NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(0.55, 1),
-            NumberSequenceKeypoint.new(0.75, 0.35), NumberSequenceKeypoint.new(1, 0.7),
+            NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(0.62, 1),
+            NumberSequenceKeypoint.new(0.78, 0.3), NumberSequenceKeypoint.new(1, 0.5),
         }),
     }, arcStroke)
     local Grip = New("TextButton", {
-        AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -2, 1, -2), Size = UDim2.fromOffset(34, 34),
+        AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(1, 0, 1, 0), Size = UDim2.fromOffset(60, 60),
         BackgroundTransparency = 1, Text = "", AutoButtonColor = false, ZIndex = 20,
     }, Main)
     local resizing, rStart, rSize = false, nil, nil
