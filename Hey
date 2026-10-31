@@ -20,7 +20,7 @@ local WHITE, BLACK = Color3.new(1, 1, 1), Color3.new(0, 0, 0)
 local function C(r, g, b) return Color3.fromRGB(r, g, b) end
 
 local Flexozy = {
-    Version = "4.2.0",
+    Version = "4.3.0",
     Icons = {
         Home     = "rbxassetid://98755624629571",
         Grid     = "rbxassetid://81344910161871",
@@ -965,37 +965,35 @@ function Flexozy:CreateWindow(cfg)
         updateHeader()
     end
 
-    -- window controls INSIDE the header (flat icons, RVX style)
-    local function HeaderButton(xFromRight)
-        local b = New("TextButton", {
-            Size = UDim2.fromOffset(24, 24), Position = UDim2.new(1, xFromRight, 0, (HEADER - 24) / 2),
-            BackgroundColor3 = WHITE, BackgroundTransparency = 1, Text = "", AutoButtonColor = false,
-        }, Header)
-        Round(b, 12)
-        Interact(b, true)
-        b.MouseEnter:Connect(function() Tween(b, 0.15, { BackgroundTransparency = 0.88 }) end)
-        b.MouseLeave:Connect(function() Tween(b, 0.15, { BackgroundTransparency = 1 }) end)
-        return b
+    -- single RVX-style window button (compress icon) inside the header
+    local BtnHide = New("TextButton", {
+        Size = UDim2.fromOffset(32, 32), Position = UDim2.new(1, -34, 0, (HEADER - 32) / 2),
+        BackgroundColor3 = WHITE, BackgroundTransparency = 1, Text = "", AutoButtonColor = false,
+    }, Header)
+    Round(BtnHide, 16)
+    Interact(BtnHide, true)
+    local hideSegs = {}
+    local function Seg(x1, y1, x2, y2)
+        local dx, dy = x2 - x1, y2 - y1
+        local f = IBar(BtnHide, 4 + (x1 + x2) / 2, 4 + (y1 + y2) / 2, math.sqrt(dx * dx + dy * dy) + 1.8, 1.8,
+            T.Dim, math.deg(math.atan2(dy, dx)))
+        hideSegs[#hideSegs + 1] = f
     end
-    local BtnClose = HeaderButton(-26)
-    local BtnMax = HeaderButton(-50)
-    local BtnMin = HeaderButton(-74)
-    local dash = New("Frame", {
-        AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),
-        Size = UDim2.fromOffset(11, 2.2), BackgroundColor3 = T.Dim, BorderSizePixel = 0
-    }, BtnMin)
-    Round(dash, 1)
-    local sq = New("Frame", {
-        AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),
-        Size = UDim2.fromOffset(10, 10), BackgroundTransparency = 1
-    }, BtnMax)
-    Round(sq, 3)
-    Stroke(sq, T.Dim, 1.5)
-    IBar(BtnClose, 12, 12, 13, 2, T.Dim, 45)
-    IBar(BtnClose, 12, 12, 13, 2, T.Dim, -45)
+    -- lucide "minimize-2"
+    Seg(4, 14, 10, 14) Seg(10, 14, 10, 20)
+    Seg(20, 10, 14, 10) Seg(14, 10, 14, 4)
+    Seg(14, 10, 21, 3) Seg(3, 21, 10, 14)
+    BtnHide.MouseEnter:Connect(function()
+        Tween(BtnHide, 0.15, { BackgroundTransparency = 0.88 })
+        for _, f in ipairs(hideSegs) do Tween(f, 0.15, { BackgroundColor3 = T.Text }) end
+    end)
+    BtnHide.MouseLeave:Connect(function()
+        Tween(BtnHide, 0.15, { BackgroundTransparency = 1 })
+        for _, f in ipairs(hideSegs) do Tween(f, 0.15, { BackgroundColor3 = T.Dim }) end
+    end)
 
     local SearchWrap = New("Frame", {
-        AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -86, 0, (HEADER - 40) / 2),
+        AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -50, 0, (HEADER - 40) / 2),
         Size = UDim2.fromOffset(230, 40), BackgroundColor3 = T.Field, BackgroundTransparency = 0.25, BorderSizePixel = 0,
     }, Header)
     Round(SearchWrap, 20)
@@ -2025,174 +2023,276 @@ function Flexozy:CreateWindow(cfg)
     function W:BuildHome(tab)
         local page = tab.Content
         local startTime = tick()
-        local gc = New("Frame", {
-            Size = UDim2.new(1, 0, 0, 80), BackgroundColor3 = T.Card, BackgroundTransparency = 0.3, BorderSizePixel = 0,
-            LayoutOrder = tab:_ord()
-        }, page)
-        Round(gc, 22)
-        Stroke(gc, T.Stroke, 1, 0.3)
-        local gbar = New("Frame", {
-            Position = UDim2.fromOffset(0, 16), Size = UDim2.fromOffset(4, 48), BorderSizePixel = 0
-        }, gc)
-        Round(gbar, 2)
-        AccentGrad(gbar, 90)
-        local greet = Label(gc, {
-            Position = UDim2.fromOffset(20, 16), Size = UDim2.new(0.5, 0, 0, 14), Text = Greeting(),
+        W:AddTranslations({
+            ["Min"] = "ต่ำสุด", ["Max"] = "สูงสุด", ["Copy ID"] = "คัดลอก ID", ["Rejoin"] = "เข้าเซิร์ฟใหม่",
+            ["ID copied"] = "คัดลอก ID แล้ว", ["Rejoining..."] = "กำลังเข้าเซิร์ฟใหม่...", ["Server"] = "เซิร์ฟเวอร์",
+        })
+        local PANEL = C(16, 20, 28)
+        local function Panel(height, order)
+            local f = New("Frame", {
+                Size = UDim2.new(1, 0, 0, height), BackgroundColor3 = PANEL, BackgroundTransparency = 0.5,
+                BorderSizePixel = 0, LayoutOrder = order,
+            }, page)
+            Round(f, 24)
+            New("UIStroke", { Color = WHITE, Thickness = 1, Transparency = 0.88, ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, f)
+            return f
+        end
+        local function Status(good, warn, bad)
+            return bad and T.Danger or (warn and T.Warn or good)
+        end
+
+        -- ===== hero =====
+        local hero = Panel(100, tab:_ord())
+        local glow = New("Frame", { Size = UDim2.fromScale(1, 1), BackgroundColor3 = WHITE, BorderSizePixel = 0 }, hero)
+        Round(glow, 24)
+        local glowG = New("UIGradient", {
+            Transparency = NumberSequence.new({
+                NumberSequenceKeypoint.new(0, 0.8), NumberSequenceKeypoint.new(0.5, 1), NumberSequenceKeypoint.new(1, 1),
+            }),
+        }, glow)
+        Themed(function() glowG.Color = ColorSequence.new(T.Accent) end)
+        local av = New("ImageLabel", {
+            Position = UDim2.fromOffset(20, 22), Size = UDim2.fromOffset(56, 56), BackgroundColor3 = T.Card2,
+            Image = "rbxthumb://type=AvatarHeadShot&id=" .. tostring(LP.UserId) .. "&w=150&h=150",
+        }, hero)
+        Round(av, 28)
+        local avRing = New("UIStroke", { Color = T.Accent, Thickness = 2, ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, av)
+        Themed(function() avRing.Color = T.Accent end)
+        local avDot = New("Frame", {
+            Position = UDim2.fromOffset(62, 62), Size = UDim2.fromOffset(13, 13), BackgroundColor3 = T.Ok, BorderSizePixel = 0,
+        }, hero)
+        Round(avDot, 7)
+        New("UIStroke", { Color = C(22, 26, 35), Thickness = 2 }, avDot)
+        local greet = Label(hero, {
+            Position = UDim2.fromOffset(92, 20), Size = UDim2.new(0.5, -92, 0, 14), Text = Greeting(),
             TextSize = 12, TextColor3 = T.Muted
         })
-        Label(gc, {
-            Position = UDim2.fromOffset(20, 34), Size = UDim2.new(0.5, 0, 0, 28), Text = LP.DisplayName,
-            Font = Enum.Font.GothamBold, TextSize = 18
+        Label(hero, {
+            Position = UDim2.fromOffset(92, 36), Size = UDim2.new(0.5, -92, 0, 26), Text = LP.DisplayName,
+            Font = Enum.Font.GothamBold, TextSize = 20
         })
-        local clock = Label(gc, {
-            AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -20, 0, 14),
-            Size = UDim2.fromOffset(160, 26), TextXAlignment = Enum.TextXAlignment.Right,
-            Font = Enum.Font.GothamBold, TextSize = 21
+        local subL = Label(hero, {
+            Position = UDim2.fromOffset(92, 66), Size = UDim2.new(0.55, -92, 0, 14),
+            Text = "@" .. LP.Name .. "   •   " .. execText(), TextSize = 11.5, TextColor3 = T.Muted
         })
-        local date = Label(gc, {
-            AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -20, 0, 46),
-            Size = UDim2.fromOffset(160, 14), TextXAlignment = Enum.TextXAlignment.Right, TextSize = 11.5,
+        table.insert(W.LangFns, function() subL.Text = "@" .. LP.Name .. "   •   " .. execText() end)
+        local clock = Label(hero, {
+            AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -24, 0, 20),
+            Size = UDim2.fromOffset(180, 34), TextXAlignment = Enum.TextXAlignment.Right,
+            Font = Enum.Font.GothamBold, TextSize = 28
+        })
+        local date = Label(hero, {
+            AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -24, 0, 58),
+            Size = UDim2.fromOffset(180, 14), TextXAlignment = Enum.TextXAlignment.Right, TextSize = 12,
             TextColor3 = T.Muted
         })
-        local game_ = New("Frame", {
-            Size = UDim2.new(1, 0, 0, 130), BackgroundColor3 = T.Card, BackgroundTransparency = 0.3, BorderSizePixel = 0,
-            ClipsDescendants = true, LayoutOrder = tab:_ord()
-        }, page)
-        Round(game_, 24)
-        Stroke(game_, T.Stroke, 1, 0.3)
+
+        -- ===== game / server =====
+        local gcard = Panel(138, tab:_ord())
+        gcard.ClipsDescendants = true
         local iconUrl = "rbxthumb://type=GameIcon&id=" .. tostring(game.GameId) .. "&w=150&h=150"
         local banner = New("ImageLabel", {
             AnchorPoint = Vector2.new(1, 0), Position = UDim2.fromScale(1, 0), Size = UDim2.fromScale(0.7, 1),
-            BackgroundTransparency = 1, ScaleType = Enum.ScaleType.Crop, Image = iconUrl,
-            ImageTransparency = 0.78
-        }, game_)
+            BackgroundTransparency = 1, ScaleType = Enum.ScaleType.Crop, Image = iconUrl, ImageTransparency = 0.8
+        }, gcard)
+        Round(banner, 24)
         New("UIGradient", {
-            Transparency = NumberSequence.new({
-                NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(1, 0)
-            })
+            Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(1, 0) })
         }, banner)
         local thumb = New("ImageLabel", {
-            Position = UDim2.fromOffset(18, 22), Size = UDim2.fromOffset(86, 86), BackgroundColor3 = T.Card2,
+            Position = UDim2.fromOffset(20, 25), Size = UDim2.fromOffset(88, 88), BackgroundColor3 = T.Card2,
             ScaleType = Enum.ScaleType.Crop, Image = iconUrl
-        }, game_)
-        Round(thumb, 22)
-        local gName = Label(game_, {
-            Position = UDim2.fromOffset(120, 28), Size = UDim2.new(1, -136, 0, 22), Text = "Loading...",
-            Font = Enum.Font.GothamBold, TextSize = 15
+        }, gcard)
+        Round(thumb, 24)
+        New("UIStroke", { Color = WHITE, Thickness = 1, Transparency = 0.85 }, thumb)
+        local gName = Label(gcard, {
+            Position = UDim2.fromOffset(124, 24), Size = UDim2.new(1, -270, 0, 24), Text = game.Name,
+            Font = Enum.Font.GothamBold, TextSize = 16
         })
-        local gBy = Label(game_, {
-            Position = UDim2.fromOffset(120, 52), Size = UDim2.new(1, -136, 0, 14), Text = "", TextSize = 11.5,
+        local gBy = Label(gcard, {
+            Position = UDim2.fromOffset(124, 50), Size = UDim2.new(1, -270, 0, 14), Text = "", TextSize = 11.5,
             TextColor3 = T.Muted
         })
-        local function Pill(x, w, text)
-            local p = New("Frame", {
-                Position = UDim2.fromOffset(x, 80), Size = UDim2.fromOffset(w, 24),
-                BackgroundColor3 = T.Card2, BackgroundTransparency = 0.2, BorderSizePixel = 0
-            }, game_)
-            Round(p, 12)
-            Stroke(p, T.Stroke, 1, 0.3)
-            return Label(p, {
-                Size = UDim2.fromScale(1, 1), Text = text, TextSize = 11,
-                TextXAlignment = Enum.TextXAlignment.Center, TextColor3 = T.Dim
+        local chipRow = New("Frame", {
+            Position = UDim2.fromOffset(124, 84), Size = UDim2.new(1, -270, 0, 28), BackgroundTransparency = 1
+        }, gcard)
+        New("UIListLayout", {
+            FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 8),
+            VerticalAlignment = Enum.VerticalAlignment.Center, SortOrder = Enum.SortOrder.LayoutOrder
+        }, chipRow)
+        local function Chip(text, order)
+            local f = New("Frame", {
+                Size = UDim2.fromOffset(0, 28), AutomaticSize = Enum.AutomaticSize.X, BackgroundColor3 = T.Card2,
+                BackgroundTransparency = 0.35, BorderSizePixel = 0, LayoutOrder = order
+            }, chipRow)
+            Round(f, 14)
+            New("UIPadding", { PaddingLeft = UDim.new(0, 12), PaddingRight = UDim.new(0, 12) }, f)
+            return Label(f, {
+                Size = UDim2.fromOffset(0, 28), AutomaticSize = Enum.AutomaticSize.X, Text = text, TextSize = 11.5,
+                TextColor3 = T.Dim, TextTruncate = Enum.TextTruncate.None
             })
         end
-        Pill(120, 124, "ID " .. tostring(game.PlaceId))
-        local pillPl = Pill(252, 96, "Players 0/0")
-        task.spawn(function()
-            local ok, info = pcall(function() return Market:GetProductInfo(game.PlaceId) end)
-            if ok and info and gName.Parent then
-                gName.Text = info.Name or gName.Text
-                gBy.Text = "by " .. ((info.Creator and info.Creator.Name) or "Roblox")
+        Chip("ID " .. tostring(game.PlaceId), 1)
+        local chipPl = Chip("Players 0/0", 2)
+        local function SmallBtn(text, y, primary, cb)
+            local b = New("TextButton", {
+                AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -20, 0, y), Size = UDim2.fromOffset(120, 34),
+                BackgroundColor3 = primary and T.Accent or T.Card2, BackgroundTransparency = primary and 0.05 or 0.35,
+                Text = "", AutoButtonColor = false, BorderSizePixel = 0
+            }, gcard)
+            Round(b, 17)
+            Interact(b)
+            local l = Label(b, {
+                Size = UDim2.fromScale(1, 1), Text = "", TextXAlignment = Enum.TextXAlignment.Center,
+                Font = Enum.Font.GothamBold, TextSize = 12.5
+            })
+            Loc(text, "func", function(t) l.Text = t end)
+            Themed(function()
+                if primary then
+                    b.BackgroundColor3 = T.Accent
+                    l.TextColor3 = Ink(T.Accent)
+                end
+            end)
+            b.MouseButton1Click:Connect(cb)
+            return b
+        end
+        SmallBtn("Copy ID", 28, false, function()
+            local fn = setclipboard or toclipboard
+            if fn and pcall(fn, tostring(game.PlaceId)) then
+                W:Notify({ Title = "Server", Content = "ID copied", Type = "Success", Force = true })
             end
         end)
+        SmallBtn("Rejoin", 72, true, function()
+            W:Notify({ Title = "Server", Content = "Rejoining...", Force = true })
+            pcall(function() game:GetService("TeleportService"):Teleport(game.PlaceId, LP) end)
+        end)
+        task.spawn(function()
+            local ok, info = pcall(function() return Market:GetProductInfo(game.PlaceId) end)
+            if not gName.Parent then return end
+            local nm = ok and info and info.Name
+            if not nm or nm == "" then nm = game.Name end
+            gName.Text = nm
+            gBy.Text = "by " .. ((ok and info and info.Creator and info.Creator.Name) or "Roblox")
+        end)
+
+        -- ===== stat cards =====
         local grid = New("Frame", {
-            Size = UDim2.new(1, 0, 0, 144), BackgroundTransparency = 1, LayoutOrder = tab:_ord()
+            Size = UDim2.new(1, 0, 0, 166), BackgroundTransparency = 1, LayoutOrder = tab:_ord()
         }, page)
         New("UIGridLayout", {
-            CellSize = UDim2.new(0.5, -5, 0, 67), CellPadding = UDim2.fromOffset(10, 10),
+            CellSize = UDim2.new(0.5, -5, 0, 78), CellPadding = UDim2.fromOffset(10, 10),
             SortOrder = Enum.SortOrder.LayoutOrder
         }, grid)
         local function Stat(label, idx)
             local c = New("Frame", {
-                BackgroundColor3 = T.Card, BackgroundTransparency = 0.3, BorderSizePixel = 0, LayoutOrder = idx
+                BackgroundColor3 = PANEL, BackgroundTransparency = 0.5, BorderSizePixel = 0, LayoutOrder = idx
             }, grid)
             Round(c, 20)
-            Stroke(c, T.Stroke, 1, 0.3)
+            New("UIStroke", { Color = WHITE, Thickness = 1, Transparency = 0.88, ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, c)
             local b = New("Frame", {
-                Position = UDim2.fromOffset(12, 12), Size = UDim2.fromOffset(3, 42), BorderSizePixel = 0
+                Position = UDim2.fromOffset(14, 14), Size = UDim2.fromOffset(3, 50), BorderSizePixel = 0
             }, c)
             Round(b, 2)
             AccentGrad(b, 90)
             local sn = Label(c, {
-                Position = UDim2.fromOffset(24, 12), Size = UDim2.new(1, -32, 0, 14), Text = "",
+                Position = UDim2.fromOffset(28, 12), Size = UDim2.new(1, -44, 0, 14), Text = "",
                 TextSize = 11.5, TextColor3 = T.Muted
             })
             Loc(label, "ui", function(t) sn.Text = t end)
-            return Label(c, {
-                Position = UDim2.fromOffset(24, 32), Size = UDim2.new(1, -32, 0, 22), Text = "-",
-                Font = Enum.Font.GothamBold, TextSize = 14
+            local val = Label(c, {
+                Position = UDim2.fromOffset(28, 28), Size = UDim2.new(1, -44, 0, 26), Text = "-",
+                Font = Enum.Font.GothamBold, TextSize = 20
             })
+            local track = New("Frame", {
+                Position = UDim2.fromOffset(28, 60), Size = UDim2.new(1, -44, 0, 4), BackgroundColor3 = WHITE,
+                BackgroundTransparency = 0.9, BorderSizePixel = 0
+            }, c)
+            Round(track, 2)
+            local fill = New("Frame", {
+                Size = UDim2.fromScale(0, 1), BackgroundColor3 = T.Accent, BorderSizePixel = 0
+            }, track)
+            Round(fill, 2)
+            return function(text, ratio, col)
+                val.Text = text
+                val.TextColor3 = col or T.Text
+                fill.BackgroundColor3 = col or T.Accent
+                Tween(fill, 0.25, { Size = UDim2.fromScale(math.clamp(ratio, 0, 1), 1) })
+            end
         end
-        local sPlayers = Stat("Players", 1)
-        local sTime    = Stat("Session time", 2)
-        local sFps     = Stat("FPS", 3)
-        local sPing    = Stat("Ping", 4)
-        local perf = New("Frame", {
-            Size = UDim2.new(1, 0, 0, 124), BackgroundColor3 = T.Card, BackgroundTransparency = 0.3, BorderSizePixel = 0,
-            LayoutOrder = tab:_ord()
-        }, page)
-        Round(perf, 22)
-        Stroke(perf, T.Stroke, 1, 0.3)
+        local setPlayers = Stat("Players", 1)
+        local setTime    = Stat("Session time", 2)
+        local setFps     = Stat("FPS", 3)
+        local setPing    = Stat("Ping", 4)
+
+        -- ===== performance chart =====
+        local perf = Panel(190, tab:_ord())
         local pt = Label(perf, {
-            Position = UDim2.fromOffset(18, 12), Size = UDim2.new(0.6, 0, 0, 14), Text = "",
-            Font = Enum.Font.GothamBold, TextSize = 12
+            Position = UDim2.fromOffset(20, 14), Size = UDim2.new(0.5, 0, 0, 16), Text = "",
+            Font = Enum.Font.GothamBold, TextSize = 13
         })
         Loc("Performance (FPS)", "ui", function(t) pt.Text = t end)
         local avgLbl = Label(perf, {
-            AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -18, 0, 12),
-            Size = UDim2.fromOffset(140, 14), TextXAlignment = Enum.TextXAlignment.Right, Text = "Avg - FPS",
+            AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -20, 0, 15),
+            Size = UDim2.new(0.5, 0, 0, 14), TextXAlignment = Enum.TextXAlignment.Right, Text = "",
             TextSize = 11.5, TextColor3 = T.Dim
         })
         local chart = New("Frame", {
-            Position = UDim2.fromOffset(18, 38), Size = UDim2.new(1, -36, 0, 72), BackgroundTransparency = 1,
-            ClipsDescendants = true
+            Position = UDim2.fromOffset(20, 46), Size = UDim2.new(1, -40, 0, 124), BackgroundTransparency = 1
         }, perf)
-        local N = 36
+        for k = 1, 3 do
+            New("Frame", {
+                Position = UDim2.new(0, 0, k / 4, 0), Size = UDim2.new(1, 0, 0, 1), BackgroundColor3 = WHITE,
+                BackgroundTransparency = 0.93, BorderSizePixel = 0
+            }, chart)
+        end
+        local N = 48
         local bars, hist = {}, {}
         for i = 1, N do
             hist[i] = 0
             local b = New("Frame", {
                 AnchorPoint = Vector2.new(0, 1), Position = UDim2.new((i - 1) / N, 1, 1, 0),
-                Size = UDim2.new(1 / N, -2, 0.05, 0), BackgroundColor3 = T.Accent, BorderSizePixel = 0
+                Size = UDim2.new(1 / N, -2, 0.03, 0), BackgroundColor3 = T.Accent, BorderSizePixel = 0
             }, chart)
-            Round(b, 2)
+            Round(b, 3)
             bars[i] = b
         end
-        Themed(function()
-            for _, b in ipairs(bars) do b.BackgroundColor3 = T.Accent end
-        end)
+        local avgLine = New("Frame", {
+            AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 0, 0.5, 0), Size = UDim2.new(1, 0, 0, 1),
+            BackgroundColor3 = WHITE, BackgroundTransparency = 0.55, BorderSizePixel = 0, ZIndex = 3
+        }, chart)
+
         table.insert(W.Updaters, function(fps, ping)
             greet.Text = Tr(Greeting(), "ui")
             clock.Text = os.date("%H:%M")
             date.Text = os.date("%d / %m / %Y")
             local cnt, mx = #Players:GetPlayers(), Players.MaxPlayers
-            sPlayers.Text = tostring(cnt)
-            pillPl.Text = (Tr("Players", "ui") .. " %d/%d"):format(cnt, mx)
+            chipPl.Text = (Tr("Players", "ui") .. " %d/%d"):format(cnt, mx)
+            setPlayers(("%d / %d"):format(cnt, mx), cnt / math.max(mx, 1), T.Text)
             local e = math.floor(tick() - startTime)
-            sTime.Text = ("%02d:%02d:%02d"):format(math.floor(e / 3600), math.floor(e / 60) % 60, e % 60)
-            sFps.Text = tostring(fps)
-            sFps.TextColor3 = fps < 25 and T.Danger or T.Accent
-            sPing.Text = ping and (tostring(ping) .. " ms") or "-"
-            sPing.TextColor3 = (ping and ping > 150) and T.Danger or T.Accent
-            sTime.TextColor3 = T.Text
-            sPlayers.TextColor3 = T.Text
+            setTime(("%02d:%02d:%02d"):format(math.floor(e / 3600), math.floor(e / 60) % 60, e % 60), (e % 3600) / 3600, T.Text)
+            setFps(tostring(fps), fps / 144, Status(T.Accent, fps < 45, fps < 25))
+            setPing(ping and (tostring(ping) .. " ms") or "-", ping and (1 - math.clamp(ping / 300, 0, 1)) or 0,
+                Status(T.Accent, ping and ping > 90, ping and ping > 150))
             table.remove(hist, 1)
             table.insert(hist, fps)
-            local sum, mxv = 0, 60
-            for _, v in ipairs(hist) do sum += v if v > mxv then mxv = v end end
-            avgLbl.Text = (Tr("Avg", "ui") .. " %d FPS"):format(math.floor(sum / N + 0.5))
+            local sum, cntv, lo, hi = 0, 0, math.huge, 0
+            for _, v in ipairs(hist) do
+                if v > 0 then
+                    sum += v
+                    cntv += 1
+                    if v < lo then lo = v end
+                    if v > hi then hi = v end
+                end
+            end
+            local avg = cntv > 0 and sum / cntv or 0
+            if lo == math.huge then lo = 0 end
+            local top = math.max(60, hi)
+            avgLbl.Text = ("%s %d   •   %s %d   •   %s %d"):format(Tr("Avg", "ui"), math.floor(avg + 0.5), Tr("Min", "ui"), lo, Tr("Max", "ui"), hi)
+            avgLine.Position = UDim2.new(0, 0, 1 - math.clamp(avg / top, 0.03, 1), 0)
             for i, b in ipairs(bars) do
-                b.Size = UDim2.new(1 / N, -2, math.clamp(hist[i] / mxv, 0.04, 1), 0)
+                b.Size = UDim2.new(1 / N, -2, math.clamp(hist[i] / top, 0.03, 1), 0)
+                b.BackgroundColor3 = (hist[i] > 0 and hist[i] < 30) and T.Danger or T.Accent
+                b.BackgroundTransparency = 0.6 * (1 - i / N)
             end
         end)
     end
@@ -2667,7 +2767,7 @@ function Flexozy:CreateWindow(cfg)
         Tween(mainCorner, 0.28, { CornerRadius = UDim.new(0, full and 0 or 32) })
         Tween(sideCorner, 0.28, { CornerRadius = UDim.new(0, full and 0 or 32) })
     end
-    BtnMax.MouseButton1Click:Connect(function()
+    local function ToggleMax()
         local on = not W.Maximized
         if on then
             savedPos = Main.Position
@@ -2675,9 +2775,21 @@ function Flexozy:CreateWindow(cfg)
         end
         W.Maximized = on
         Apply()
+    end
+    W.ToggleMaximize = ToggleMax
+    BtnHide.MouseButton1Click:Connect(function() W:Toggle(false) end)
+    -- double-click the header to maximize / restore
+    local lastHeaderClick = 0
+    Conn(Header.InputBegan, function(i)
+        if i.UserInputType ~= Enum.UserInputType.MouseButton1 and i.UserInputType ~= Enum.UserInputType.Touch then return end
+        local now = tick()
+        if now - lastHeaderClick < 0.35 then
+            lastHeaderClick = 0
+            ToggleMax()
+        else
+            lastHeaderClick = now
+        end
     end)
-    BtnMin.MouseButton1Click:Connect(function() W:Toggle(false) end)
-    BtnClose.MouseButton1Click:Connect(function() W:Toggle(false) end)
 
     -- ========================================================
     -- Bottom drag handle + corner resize grip
@@ -2695,31 +2807,40 @@ function Flexozy:CreateWindow(cfg)
     DragBar.MouseLeave:Connect(function() Tween(dragPill, 0.15, { BackgroundTransparency = 0.78 }) end)
     MakeDraggable(DragBar, Main, Conn, function() return not W.Maximized end)
 
+    local resizing, rStart, rSize
+    -- concentric arc hugging the bottom-right corner (outside the window)
     local arc = New("Frame", {
-        AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(1, -8, 1, -8), Size = UDim2.fromOffset(76, 76),
-        BackgroundTransparency = 1, ZIndex = 19,
+        AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(1, -32, 1, -32), Size = UDim2.fromOffset(84, 84),
+        BackgroundTransparency = 1, ZIndex = 19, Active = false,
     }, Main)
-    Round(arc, 38)
-    local arcStroke = New("UIStroke", { Color = WHITE, Thickness = 2, ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, arc)
+    Round(arc, 42)
+    local arcStroke = New("UIStroke", {
+        Color = WHITE, Thickness = 2.5, Transparency = 0.2, ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    }, arc)
     New("UIGradient", {
         Rotation = 45,
         Transparency = NumberSequence.new({
             NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(0.62, 1),
-            NumberSequenceKeypoint.new(0.78, 0.3), NumberSequenceKeypoint.new(1, 0.5),
+            NumberSequenceKeypoint.new(0.76, 0.4), NumberSequenceKeypoint.new(0.853, 0),
+            NumberSequenceKeypoint.new(1, 0),
         }),
     }, arcStroke)
     local Grip = New("TextButton", {
-        AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(1, 0, 1, 0), Size = UDim2.fromOffset(60, 60),
+        AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(1, -8, 1, -8), Size = UDim2.fromOffset(56, 56),
         BackgroundTransparency = 1, Text = "", AutoButtonColor = false, ZIndex = 20,
     }, Main)
-    local resizing, rStart, rSize = false, nil, nil
+    Grip.MouseEnter:Connect(function() Tween(arcStroke, 0.15, { Transparency = 0, Thickness = 3 }) end)
+    Grip.MouseLeave:Connect(function()
+        if not resizing then Tween(arcStroke, 0.2, { Transparency = 0.2, Thickness = 2.5 }) end
+    end)
+    resizing, rStart, rSize = false, nil, nil
     Conn(Grip.InputBegan, function(i)
         if W.Maximized then return end
         if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
             resizing = true
             rStart = i.Position
             rSize = Vector2.new(size.X, size.Y)
-            Tween(arcStroke, 0.1, { Transparency = 0 })
+            Tween(arcStroke, 0.1, { Transparency = 0, Thickness = 3 })
         end
     end)
     Conn(UIS.InputChanged, function(i)
@@ -2736,7 +2857,7 @@ function Flexozy:CreateWindow(cfg)
     Conn(UIS.InputEnded, function(i)
         if resizing and (i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch) then
             resizing = false
-            Tween(arcStroke, 0.2, { Transparency = 0 })
+            Tween(arcStroke, 0.25, { Transparency = 0.2, Thickness = 2.5 })
             W:Rescale()
         end
     end)
