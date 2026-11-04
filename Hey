@@ -2676,86 +2676,79 @@ function Flexozy:CreateWindow(cfg)
             lastHeaderClick = now
         end
     end)
-    -- Bottom-center resize handle
-    local DragBar = New("TextButton", {
-        AnchorPoint = Vector2.new(0.5, 0),
-        Position = UDim2.new(0.5, 0, 1, 4),
-        Size = UDim2.fromOffset(170, 18),
+    local CORNER_ASSET = "rbxassetid://120997033468887"
+    local GLOW_IDLE, GLOW_HOVER = 0.8, 0.35
+    local MIN_SIZE = Vector2.new(600, 380)
+    local MAX_SIZE = Vector2.new(1200, 780)
+    local resizing, rStart, rSize = false, nil, nil
+    local ResizeHandle = New("Frame", {
+        Name = "ResizeHandle",
+        Size = UDim2.fromOffset(32, 32),
+        Position = UDim2.new(1, 0, 1, 0),
+        AnchorPoint = Vector2.new(0.5, 0.5),
         BackgroundTransparency = 1,
-        Text = "",
-        AutoButtonColor = false,
-        ZIndex = 20,
+        ZIndex = 99,
         Active = true,
     }, Main)
-
-    local dragPill = New("Frame", {
+    local ResizeGlow = New("ImageLabel", {
+        Size = UDim2.fromOffset(96, 96),
+        Position = UDim2.new(0.5, -16, 0.5, -16),
         AnchorPoint = Vector2.new(0.5, 0.5),
-        Position = UDim2.fromScale(0.5, 0.5),
-        Size = UDim2.fromOffset(104, 4),
-        BackgroundColor3 = WHITE,
-        BackgroundTransparency = 0.68,
-        BorderSizePixel = 0,
-        ZIndex = 21,
-    }, DragBar)
-    Round(dragPill, 2)
-
-    DragBar.MouseEnter:Connect(function()
-        Tween(dragPill, 0.15, {
-            BackgroundTransparency = 0.25,
-            Size = UDim2.fromOffset(116, 5),
-        })
+        BackgroundTransparency = 1,
+        Image = CORNER_ASSET,
+        ImageTransparency = GLOW_IDLE,
+    }, ResizeHandle)
+    local function glowTo(t, dur)
+        Tween(ResizeGlow, dur, { ImageTransparency = t })
+    end
+    local function stopResize()
+        if not resizing then return end
+        resizing = false
+        glowTo(GLOW_IDLE, 0.17)
+        W:Rescale()
+    end
+    ResizeHandle.MouseEnter:Connect(function()
+        if not resizing then glowTo(GLOW_HOVER, 0.1) end
     end)
-    DragBar.MouseLeave:Connect(function()
-        if not resizing then
-            Tween(dragPill, 0.15, {
-                BackgroundTransparency = 0.68,
-                Size = UDim2.fromOffset(104, 4),
-            })
-        end
+    ResizeHandle.MouseLeave:Connect(function()
+        if not resizing then glowTo(GLOW_IDLE, 0.17) end
     end)
-
-    local resizing, rStart, rSize = false, nil, nil
-    Conn(DragBar.InputBegan, function(i)
+    Conn(ResizeHandle.InputBegan, function(i)
         if W.Maximized or collapsed then return end
         if i.UserInputType == Enum.UserInputType.MouseButton1
             or i.UserInputType == Enum.UserInputType.Touch then
             resizing = true
-            rStart = i.Position
+            rStart = Vector2.new(i.Position.X, i.Position.Y)
             rSize = Vector2.new(size.X, size.Y)
-            Tween(dragPill, 0.1, {
-                BackgroundTransparency = 0.1,
-                Size = UDim2.fromOffset(116, 5),
-            })
+            glowTo(GLOW_HOVER, 0.1)
+            i.Changed:Connect(function()
+                if i.UserInputState == Enum.UserInputState.End then stopResize() end
+            end)
         end
     end)
-
     Conn(UIS.InputChanged, function(i)
-        if not resizing then return end
+        if not resizing or W.Maximized then return end
         if i.UserInputType == Enum.UserInputType.MouseMovement
             or i.UserInputType == Enum.UserInputType.Touch then
-            local d = (i.Position - rStart) / math.max(Scale.Scale, 0.01)
+            local d = (Vector2.new(i.Position.X, i.Position.Y) - rStart) / math.max(Scale.Scale, 0.01)
             size = Vector2.new(
-                math.clamp(rSize.X + d.X * 2, 600, 1200),
-                math.clamp(rSize.Y + d.Y * 2, 380, 780)
+                math.clamp(rSize.X + d.X * 2, MIN_SIZE.X, MAX_SIZE.X),
+                math.clamp(rSize.Y + d.Y * 2, MIN_SIZE.Y, MAX_SIZE.Y)
             )
             if not collapsed then
-                Main.Size = UDim2.fromOffset(size.X, size.Y)
+                Tween(Main, 0.08, { Size = UDim2.fromOffset(size.X, size.Y) },
+                    Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
             end
         end
     end)
-
     Conn(UIS.InputEnded, function(i)
-        if resizing and (
-            i.UserInputType == Enum.UserInputType.MouseButton1
-            or i.UserInputType == Enum.UserInputType.Touch
-        ) then
-            resizing = false
-            Tween(dragPill, 0.2, {
-                BackgroundTransparency = 0.68,
-                Size = UDim2.fromOffset(104, 4),
-            })
-            W:Rescale()
+        if i.UserInputType == Enum.UserInputType.MouseButton1
+            or i.UserInputType == Enum.UserInputType.Touch then
+            stopResize()
         end
+    end)
+    Conn(Main:GetPropertyChangedSignal("Size"), function()
+        ResizeHandle.Visible = not (W.Maximized or collapsed)
     end)
     function W:Unload()
         if W.Unloaded then return end
