@@ -2715,10 +2715,28 @@ function Flexozy:CreateWindow(cfg)
     local Grip = New("TextButton", {
         AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -2, 1, -2), Size = UDim2.fromOffset(32, 32),
         BackgroundTransparency = 1, Text = "", AutoButtonColor = false, ZIndex = 20,
+        Active = true,
     }, Main)
-    Grip.MouseEnter:Connect(function() Tween(arcStroke, 0.15, { Transparency = 0, Thickness = 3 }) end)
+    local ResizeGripIcon = New("ImageLabel", {
+        Name = "ResizeGripIcon",
+        Image = "rbxassetid://10734898934",
+        Size = UDim2.fromOffset(16, 16),
+        Position = UDim2.new(1, -6, 1, -6),
+        AnchorPoint = Vector2.new(1, 1),
+        BackgroundTransparency = 1,
+        ImageColor3 = WHITE,
+        ImageTransparency = 1,
+        ZIndex = 21,
+    }, Grip)
+    Grip.MouseEnter:Connect(function()
+        Tween(arcStroke, 0.15, { Transparency = 0, Thickness = 3 })
+        Tween(ResizeGripIcon, 0.15, { ImageTransparency = 0 })
+    end)
     Grip.MouseLeave:Connect(function()
-        if not resizing then Tween(arcStroke, 0.2, { Transparency = 0.3, Thickness = 2 }) end
+        if not resizing then
+            Tween(arcStroke, 0.2, { Transparency = 0.3, Thickness = 2 })
+            Tween(ResizeGripIcon, 0.2, { ImageTransparency = 1 })
+        end
     end)
     resizing, rStart, rSize = false, nil, nil
     Conn(Grip.InputBegan, function(i)
@@ -2728,6 +2746,7 @@ function Flexozy:CreateWindow(cfg)
             rStart = i.Position
             rSize = Vector2.new(size.X, size.Y)
             Tween(arcStroke, 0.1, { Transparency = 0, Thickness = 3 })
+            Tween(ResizeGripIcon, 0.1, { ImageTransparency = 0 })
         end
     end)
     Conn(UIS.InputChanged, function(i)
@@ -2745,6 +2764,7 @@ function Flexozy:CreateWindow(cfg)
         if resizing and (i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch) then
             resizing = false
             Tween(arcStroke, 0.25, { Transparency = 0.3, Thickness = 2 })
+            Tween(ResizeGripIcon, 0.25, { ImageTransparency = 1 })
             W:Rescale()
         end
     end)
