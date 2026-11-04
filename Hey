@@ -2676,95 +2676,84 @@ function Flexozy:CreateWindow(cfg)
             lastHeaderClick = now
         end
     end)
+    -- Bottom-center resize handle
     local DragBar = New("TextButton", {
-        AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 1, 4), Size = UDim2.fromOffset(170, 18),
-        BackgroundTransparency = 1, Text = "", AutoButtonColor = false, ZIndex = 18,
-    }, Main)
-    local dragPill = New("Frame", {
-        AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.fromOffset(104, 4),
-        BackgroundColor3 = WHITE, BackgroundTransparency = 0.68, BorderSizePixel = 0, ZIndex = 18,
-    }, DragBar)
-    Round(dragPill, 2)
-    DragBar.MouseEnter:Connect(function() Tween(dragPill, 0.15, { BackgroundTransparency = 0.5 }) end)
-    DragBar.MouseLeave:Connect(function() Tween(dragPill, 0.15, { BackgroundTransparency = 0.78 }) end)
-    MakeDraggable(DragBar, Main, Conn, function() return not W.Maximized end)
-    local resizing, rStart, rSize
-    local arc = New("Frame", {
-        AnchorPoint = Vector2.new(1, 1),
-        Position = UDim2.new(1, -6, 1, -6),
-        Size = UDim2.fromOffset(28, 28),
+        AnchorPoint = Vector2.new(0.5, 0),
+        Position = UDim2.new(0.5, 0, 1, 4),
+        Size = UDim2.fromOffset(170, 18),
         BackgroundTransparency = 1,
-        ZIndex = 19,
-        Active = false,
-    }, Main)
-    Round(arc, 14)
-    local arcStroke = New("UIStroke", {
-        Color = T.Accent,
-        Thickness = 2,
-        Transparency = 0.3,
-        ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
-    }, arc)
-    New("UIGradient", {
-        Rotation = 45,
-        Transparency = NumberSequence.new({
-            NumberSequenceKeypoint.new(0, 1),
-            NumberSequenceKeypoint.new(0.5, 1),
-            NumberSequenceKeypoint.new(1, 0),
-        }),
-    }, arcStroke)
-    local Grip = New("TextButton", {
-        AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -2, 1, -2), Size = UDim2.fromOffset(32, 32),
-        BackgroundTransparency = 1, Text = "", AutoButtonColor = false, ZIndex = 20,
+        Text = "",
+        AutoButtonColor = false,
+        ZIndex = 20,
         Active = true,
     }, Main)
-    local ResizeGripIcon = New("ImageLabel", {
-        Name = "ResizeGripIcon",
-        Image = "rbxassetid://10734898934",
-        Size = UDim2.fromOffset(16, 16),
-        Position = UDim2.new(1, -6, 1, -6),
-        AnchorPoint = Vector2.new(1, 1),
-        BackgroundTransparency = 1,
-        ImageColor3 = WHITE,
-        ImageTransparency = 1,
+
+    local dragPill = New("Frame", {
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        Position = UDim2.fromScale(0.5, 0.5),
+        Size = UDim2.fromOffset(104, 4),
+        BackgroundColor3 = WHITE,
+        BackgroundTransparency = 0.68,
+        BorderSizePixel = 0,
         ZIndex = 21,
-    }, Grip)
-    Grip.MouseEnter:Connect(function()
-        Tween(arcStroke, 0.15, { Transparency = 0, Thickness = 3 })
-        Tween(ResizeGripIcon, 0.15, { ImageTransparency = 0 })
+    }, DragBar)
+    Round(dragPill, 2)
+
+    DragBar.MouseEnter:Connect(function()
+        Tween(dragPill, 0.15, {
+            BackgroundTransparency = 0.25,
+            Size = UDim2.fromOffset(116, 5),
+        })
     end)
-    Grip.MouseLeave:Connect(function()
+    DragBar.MouseLeave:Connect(function()
         if not resizing then
-            Tween(arcStroke, 0.2, { Transparency = 0.3, Thickness = 2 })
-            Tween(ResizeGripIcon, 0.2, { ImageTransparency = 1 })
+            Tween(dragPill, 0.15, {
+                BackgroundTransparency = 0.68,
+                Size = UDim2.fromOffset(104, 4),
+            })
         end
     end)
-    resizing, rStart, rSize = false, nil, nil
-    Conn(Grip.InputBegan, function(i)
+
+    local resizing, rStart, rSize = false, nil, nil
+    Conn(DragBar.InputBegan, function(i)
         if W.Maximized or collapsed then return end
-        if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+        if i.UserInputType == Enum.UserInputType.MouseButton1
+            or i.UserInputType == Enum.UserInputType.Touch then
             resizing = true
             rStart = i.Position
             rSize = Vector2.new(size.X, size.Y)
-            Tween(arcStroke, 0.1, { Transparency = 0, Thickness = 3 })
-            Tween(ResizeGripIcon, 0.1, { ImageTransparency = 0 })
+            Tween(dragPill, 0.1, {
+                BackgroundTransparency = 0.1,
+                Size = UDim2.fromOffset(116, 5),
+            })
         end
     end)
+
     Conn(UIS.InputChanged, function(i)
         if not resizing then return end
-        if i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch then
+        if i.UserInputType == Enum.UserInputType.MouseMovement
+            or i.UserInputType == Enum.UserInputType.Touch then
             local d = (i.Position - rStart) / math.max(Scale.Scale, 0.01)
             size = Vector2.new(
                 math.clamp(rSize.X + d.X * 2, 600, 1200),
                 math.clamp(rSize.Y + d.Y * 2, 380, 780)
             )
-            if not collapsed then Main.Size = UDim2.fromOffset(size.X, size.Y) end
+            if not collapsed then
+                Main.Size = UDim2.fromOffset(size.X, size.Y)
+            end
         end
     end)
+
     Conn(UIS.InputEnded, function(i)
-        if resizing and (i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch) then
+        if resizing and (
+            i.UserInputType == Enum.UserInputType.MouseButton1
+            or i.UserInputType == Enum.UserInputType.Touch
+        ) then
             resizing = false
-            Tween(arcStroke, 0.25, { Transparency = 0.3, Thickness = 2 })
-            Tween(ResizeGripIcon, 0.25, { ImageTransparency = 1 })
+            Tween(dragPill, 0.2, {
+                BackgroundTransparency = 0.68,
+                Size = UDim2.fromOffset(104, 4),
+            })
             W:Rescale()
         end
     end)
