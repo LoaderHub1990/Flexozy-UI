@@ -2733,7 +2733,7 @@ function Flexozy:CreateWindow(cfg)
             local d = (Vector2.new(i.Position.X, i.Position.Y) - rStart) / math.max(Scale.Scale, 0.01)
             size = Vector2.new(
                 math.clamp(rSize.X + d.X * 2, MIN_SIZE.X, MAX_SIZE.X),
-                math.clamp(rSize.Y + d.Y * 2, MIN_SIZE.Y, MAX_SIZE.Y)
+                rSize.Y
             )
             if not collapsed then
                 Tween(Main, 0.08, { Size = UDim2.fromOffset(size.X, size.Y) },
@@ -2795,7 +2795,7 @@ function Flexozy:CreateWindow(cfg)
             or i.UserInputType == Enum.UserInputType.Touch then
             local d = (Vector2.new(i.Position.X, i.Position.Y) - bStart) / math.max(Scale.Scale, 0.01)
             size = Vector2.new(
-                math.clamp(bSize.X + d.X * 2, MIN_SIZE.X, MAX_SIZE.X),
+                bSize.X,
                 math.clamp(bSize.Y + d.Y * 2, MIN_SIZE.Y, MAX_SIZE.Y)
             )
             if not collapsed then
