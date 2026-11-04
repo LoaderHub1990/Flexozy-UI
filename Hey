@@ -675,14 +675,21 @@ function Flexozy:CreateWindow(cfg)
         Size = UDim2.new(0, SIDE_W, 1, 0), BackgroundTransparency = 1, BorderSizePixel = 0, ClipsDescendants = true,
     }, Body)
     local SideBg = New("Frame", {
-        Size = UDim2.new(0, SIDE_W + 60, 1, 0), BackgroundColor3 = C(11, 14, 21),
-        BackgroundTransparency = 0.12, BorderSizePixel = 0,
+        Size = UDim2.new(0, SIDE_W + 60, 1, 0), BackgroundColor3 = WHITE,
+        BackgroundTransparency = 0.5, BorderSizePixel = 0,
     }, SideClip)
+    New("UIGradient", {
+        Color = ColorSequence.new(C(22, 27, 40), C(8, 10, 16)), Rotation = 90,
+    }, SideBg)
     local sideCorner = Round(SideBg, 32)
     Rim(SideBg, { { 0, 0.6 }, { 0.5, 0.82 }, { 1, 0.58 } })
     local Sidebar = New("Frame", {
         Size = UDim2.new(0, SIDE_W, 1, 0), BackgroundTransparency = 1, BorderSizePixel = 0,
     }, Body)
+    New("Frame", {
+        AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, 0, 0, 22), Size = UDim2.new(0, 1, 1, -44),
+        BackgroundColor3 = WHITE, BackgroundTransparency = 0.9, BorderSizePixel = 0,
+    }, Sidebar)
     local Brand = New("Frame", { Size = UDim2.new(1, 0, 0, NAV_TOP), BackgroundTransparency = 1 }, Sidebar)
     MakeDraggable(Brand, Main, Conn, function() return not W.Maximized end)
     local Logo = New("Frame", {
@@ -2520,12 +2527,12 @@ function Flexozy:CreateWindow(cfg)
         })
     end
     local toastHost = New("Frame", {
-        AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -28),
+        AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -24, 1, -24),
         Size = UDim2.fromOffset(320, 400), BackgroundTransparency = 1, BorderSizePixel = 0, ZIndex = 50,
     }, Gui)
     New("UIListLayout", {
         SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 8),
-        HorizontalAlignment = Enum.HorizontalAlignment.Center,
+        HorizontalAlignment = Enum.HorizontalAlignment.Right,
         VerticalAlignment = Enum.VerticalAlignment.Bottom,
     }, toastHost)
     local toastN, toasts = 0, {}
@@ -2547,8 +2554,8 @@ function Flexozy:CreateWindow(cfg)
         }, toastHost)
         table.insert(toasts, slot)
         local cg = New("CanvasGroup", {
-            Size = UDim2.fromScale(1, 1), Position = UDim2.fromOffset(0, 26),
-            BackgroundColor3 = C(18, 20, 26), BackgroundTransparency = 0.06, BorderSizePixel = 0,
+            Size = UDim2.fromScale(1, 1), Position = UDim2.fromOffset(60, 0),
+            BackgroundColor3 = C(18, 20, 26), BackgroundTransparency = 0.1, BorderSizePixel = 0,
             GroupTransparency = 1,
         }, slot)
         Round(cg, 28)
@@ -2567,11 +2574,16 @@ function Flexozy:CreateWindow(cfg)
             Position = UDim2.fromOffset(54, 29), Size = UDim2.fromOffset(232, 16),
             Text = Tr(n.Content or "", "ui"), TextSize = 12, TextColor3 = T.Dim
         })
+        local life = New("Frame", {
+            AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 0, 1, 0), Size = UDim2.new(1, 0, 0, 2),
+            BackgroundColor3 = ink, BackgroundTransparency = 0.35, BorderSizePixel = 0,
+        }, cg)
+        Tween(life, dur, { Size = UDim2.new(0, 0, 0, 2) }, Enum.EasingStyle.Linear)
         Tween(cg, 0.42, { Position = UDim2.fromOffset(0, 0), GroupTransparency = 0 }, Enum.EasingStyle.Quint)
         task.delay(dur, function()
             if not (slot and slot.Parent) then return end
             local tw = Tween(cg, 0.35, {
-                Position = UDim2.fromOffset(0, 14), GroupTransparency = 1
+                Position = UDim2.fromOffset(60, 0), GroupTransparency = 1
             }, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
             tw.Completed:Connect(function()
                 local idx = table.find(toasts, slot)
@@ -2602,6 +2614,7 @@ function Flexozy:CreateWindow(cfg)
     function W:SetOpacity(o)
         o = math.clamp(tonumber(o) or 1, 0.2, 1)
         Main.BackgroundTransparency = 1 - o
+        SideBg.BackgroundTransparency = math.clamp(0.35 + (1 - o) * 0.5, 0, 1)
     end
     function W:Toggle(show)
         if show == nil then show = not W.Shown end
