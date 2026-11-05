@@ -608,18 +608,23 @@ function Flexozy:CreateWindow(cfg)
         IgnoreGuiInset = true
     }, parent)
     W.Gui = Gui
-    local Main = New("CanvasGroup", {
+    -- Main = กรอบนอกโปร่งใส (ถือตำแหน่ง/ขนาด + ที่จับปรับขนาด UI อยู่นอกขอบเหมือนเดิม)
+    -- Canvas = ตัวหน้าต่างจริง ใช้ CanvasGroup เพื่อเฟดทั้งหน้าต่างตอนเปิด/ปิด
+    local Main = New("Frame", {
         Name = "Main", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),
-        Size = UDim2.fromOffset(size.X, size.Y), BackgroundColor3 = T.Window,
-        BackgroundTransparency = 0.3, BorderSizePixel = 0,
+        Size = UDim2.fromOffset(size.X, size.Y), BackgroundTransparency = 1, BorderSizePixel = 0,
     }, Gui)
-    local mainCorner = Round(Main, 32)
-    Rim(Main, { { 0, 0.6 }, { 0.5, 0.82 }, { 1, 0.58 } })
-    New("UIGradient", { Color = ColorSequence.new(WHITE, C(205, 210, 226)), Rotation = 90 }, Main)
+    local Canvas = New("CanvasGroup", {
+        Name = "Canvas", Size = UDim2.fromScale(1, 1), BackgroundColor3 = T.Window,
+        BackgroundTransparency = 0.3, BorderSizePixel = 0,
+    }, Main)
+    local mainCorner = Round(Canvas, 32)
+    Rim(Canvas, { { 0, 0.6 }, { 0.5, 0.82 }, { 1, 0.58 } })
+    New("UIGradient", { Color = ColorSequence.new(WHITE, C(205, 210, 226)), Rotation = 90 }, Canvas)
     W.Main = Main
     local sheen = New("Frame", {
         Size = UDim2.new(1, 0, 0, 140), BackgroundColor3 = WHITE, BorderSizePixel = 0, Active = false,
-    }, Main)
+    }, Canvas)
     Round(sheen, 32)
     New("UIGradient", {
         Rotation = 90,
@@ -628,7 +633,7 @@ function Flexozy:CreateWindow(cfg)
     local Scale = New("UIScale", {}, Main)
     local ambient = New("Frame", {
         Size = UDim2.fromScale(1, 1), BackgroundColor3 = WHITE, BorderSizePixel = 0, Active = false,
-    }, Main)
+    }, Canvas)
     Round(ambient, 32)
     local ambientGrad = New("UIGradient", {
         Rotation = 35,
@@ -698,7 +703,7 @@ function Flexozy:CreateWindow(cfg)
             onLoaded()
         end)
     end
-    local Body = New("Frame", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1 }, Main)
+    local Body = New("Frame", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1 }, Canvas)
     local SideClip = New("Frame", {
         Size = UDim2.new(0, SIDE_W, 1, 0), BackgroundTransparency = 1, BorderSizePixel = 0, ClipsDescendants = true,
     }, Body)
@@ -849,7 +854,7 @@ function Flexozy:CreateWindow(cfg)
         Name = "ProfilePopup", AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 16, 1, -88),
         Size = UDim2.fromOffset(250, 0), AutomaticSize = Enum.AutomaticSize.Y,
         BackgroundColor3 = C(18, 21, 28), BorderSizePixel = 0, Visible = false, ZIndex = 30,
-    }, Main)
+    }, Canvas)
     Round(Pop, 22)
     Rim(Pop)
     New("UIPadding", {
@@ -957,7 +962,7 @@ function Flexozy:CreateWindow(cfg)
     local Header = New("Frame", {
         Position = UDim2.fromOffset(SIDE_W + 12, 0), Size = UDim2.new(1, -(SIDE_W + 24), 0, HEADER),
         BackgroundTransparency = 1
-    }, Main)
+    }, Canvas)
     MakeDraggable(Header, Main, Conn, function() return not W.Maximized end)
     local hIcon = New("ImageLabel", {
         Position = UDim2.fromOffset(14, (HEADER - 24) / 2), Size = UDim2.fromOffset(24, 24),
@@ -2898,9 +2903,10 @@ function Flexozy:CreateWindow(cfg)
     end
     function W:SetOpacity(o)
         o = math.clamp(tonumber(o) or 1, 0.2, 1)
-        Main.BackgroundTransparency = 1 - o
+        Canvas.BackgroundTransparency = 1 - o
         SideBg.BackgroundTransparency = math.clamp(0.35 + (1 - o) * 0.5, 0, 1)
     end
+    local ResizeGlow, dragPill -- ประกาศล่วงหน้า (สร้างจริงด้านล่าง) ใช้ตอนเฟดเปิด/ปิด
     local function Shift(p, dy)
         return UDim2.new(p.X.Scale, p.X.Offset, p.Y.Scale, p.Y.Offset + dy)
     end
@@ -2917,10 +2923,15 @@ function Flexozy:CreateWindow(cfg)
             local base = W._basePos or Main.Position
             W._basePos = nil
             Main.Position = Shift(base, 30)
-            Main.GroupTransparency = 1
+            Canvas.GroupTransparency = 1
+            if ResizeGlow then ResizeGlow.ImageTransparency = 1 end
+            if dragPill then dragPill.BackgroundTransparency = 1 end
             Scale.Scale = target * 0.9
             Main.Visible = true
-            Tween(Main, 0.45, { Position = base, GroupTransparency = 0 }, Enum.EasingStyle.Quint)
+            Tween(Main, 0.45, { Position = base }, Enum.EasingStyle.Quint)
+            Tween(Canvas, 0.45, { GroupTransparency = 0 }, Enum.EasingStyle.Quint)
+            if ResizeGlow then Tween(ResizeGlow, 0.5, { ImageTransparency = 0.8 }) end
+            if dragPill then Tween(dragPill, 0.5, { BackgroundTransparency = 0.68 }) end
             Tween(Scale, 0.5, { Scale = target }, Enum.EasingStyle.Back)
         else
             -- ปิด: เฟดออก + เลื่อนลง + ย่อลง
@@ -2929,7 +2940,10 @@ function Flexozy:CreateWindow(cfg)
             Tip.Visible = false
             local base = W._basePos or Main.Position
             W._basePos = base
-            Tween(Main, 0.28, { Position = Shift(base, 30), GroupTransparency = 1 }, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+            Tween(Main, 0.28, { Position = Shift(base, 30) }, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+            Tween(Canvas, 0.28, { GroupTransparency = 1 }, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+            if ResizeGlow then Tween(ResizeGlow, 0.2, { ImageTransparency = 1 }) end
+            if dragPill then Tween(dragPill, 0.2, { BackgroundTransparency = 1 }) end
             Tween(Scale, 0.28, { Scale = target * 0.9 }, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
             task.delay(0.3, function()
                 if W._tok == tok and Gui.Parent then
@@ -2944,10 +2958,11 @@ function Flexozy:CreateWindow(cfg)
     do
         local t = Scale.Scale
         local p = Main.Position
-        Main.GroupTransparency = 1
+        Canvas.GroupTransparency = 1
         Main.Position = Shift(p, 30)
         Scale.Scale = t * 0.9
-        Tween(Main, 0.6, { Position = p, GroupTransparency = 0 }, Enum.EasingStyle.Quint)
+        Tween(Main, 0.6, { Position = p }, Enum.EasingStyle.Quint)
+        Tween(Canvas, 0.6, { GroupTransparency = 0 }, Enum.EasingStyle.Quint)
         Tween(Scale, 0.6, { Scale = t }, Enum.EasingStyle.Back)
     end
     local collapsed, savedPos = false, nil
@@ -3003,14 +3018,14 @@ function Flexozy:CreateWindow(cfg)
         Name = "ResizeHandle",
         Size = UDim2.fromOffset(32, 32),
         Position = UDim2.new(1, 0, 1, 0),
-        AnchorPoint = Vector2.new(1, 1),
+        AnchorPoint = Vector2.new(0.5, 0.5),
         BackgroundTransparency = 1,
         ZIndex = 99,
         Active = true,
     }, Main)
-    local ResizeGlow = New("ImageLabel", {
+    ResizeGlow = New("ImageLabel", {
         Size = UDim2.fromOffset(96, 96),
-        Position = UDim2.new(0.5, 0, 0.5, 0),
+        Position = UDim2.new(0.5, -16, 0.5, -16),
         AnchorPoint = Vector2.new(0.5, 0.5),
         BackgroundTransparency = 1,
         Image = CORNER_ASSET,
@@ -3071,7 +3086,7 @@ function Flexozy:CreateWindow(cfg)
     local barResizing, bStart, bSize = false, nil, nil
     local DragBar = New("TextButton", {
         AnchorPoint = Vector2.new(0.5, 0),
-        Position = UDim2.new(0.5, 0, 1, -20),
+        Position = UDim2.new(0.5, 0, 1, 4),
         Size = UDim2.fromOffset(170, 18),
         BackgroundTransparency = 1,
         Text = "",
@@ -3079,7 +3094,7 @@ function Flexozy:CreateWindow(cfg)
         ZIndex = 20,
         Active = true,
     }, Main)
-    local dragPill = New("Frame", {
+    dragPill = New("Frame", {
         AnchorPoint = Vector2.new(0.5, 0.5),
         Position = UDim2.fromScale(0.5, 0.5),
         Size = UDim2.fromOffset(104, 4),
