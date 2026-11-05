@@ -396,7 +396,6 @@ function Flexozy:CreateWindow(cfg)
     local HEADER = 72
     local SIDE_W = 232
     local NAV_TOP = 84
-    local MAP_H = 48
     local startAccent, startName = ToColor(cfg.Accent or "Violet")
     T.Accent = startAccent or Flexozy.Accents.Violet
     local W = {
@@ -609,7 +608,7 @@ function Flexozy:CreateWindow(cfg)
         IgnoreGuiInset = true
     }, parent)
     W.Gui = Gui
-    local Main = New("Frame", {
+    local Main = New("CanvasGroup", {
         Name = "Main", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),
         Size = UDim2.fromOffset(size.X, size.Y), BackgroundColor3 = T.Window,
         BackgroundTransparency = 0.3, BorderSizePixel = 0,
@@ -774,11 +773,39 @@ function Flexozy:CreateWindow(cfg)
         pillBadge.BackgroundColor3 = T.Accent
         badgeLbl.TextColor3 = T.Accent:Lerp(WHITE, 0.4)
     end)
-    Label(brow, {
-        Size = UDim2.fromOffset(112, 18), Text = sub, TextSize = 11, TextColor3 = T.Muted, LayoutOrder = 2
+    -- ชื่อแมพ (แทนที่ตำแหน่ง Script Hub ใต้ชื่อค่าย) ชื่อยาวจะวิ่งไปกลับ
+    local MAP_NAME_W = 100
+    local nameClip = New("Frame", {
+        Size = UDim2.fromOffset(MAP_NAME_W, 18), BackgroundTransparency = 1, ClipsDescendants = true, LayoutOrder = 2,
+    }, brow)
+    local mapName = Label(nameClip, {
+        Size = UDim2.fromOffset(MAP_NAME_W, 18), AutomaticSize = Enum.AutomaticSize.X, Text = game.Name,
+        TextSize = 11, TextColor3 = T.Muted, TextTruncate = Enum.TextTruncate.None,
     })
+    local marqueeTw
+    local function setMapName(nm)
+        if not mapName.Parent then return end
+        mapName.Text = nm
+        if marqueeTw then marqueeTw:Cancel() marqueeTw = nil end
+        mapName.Position = UDim2.fromOffset(0, 0)
+        task.delay(0.15, function()
+            if not mapName.Parent then return end
+            local over = mapName.TextBounds.X - MAP_NAME_W
+            if over > 2 then
+                marqueeTw = TweenService:Create(mapName, TweenInfo.new(
+                    math.max(over / 22, 1.6), Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1, true, 1.2
+                ), { Position = UDim2.fromOffset(-over - 4, 0) })
+                marqueeTw:Play()
+            end
+        end)
+    end
+    setMapName(game.Name)
+    task.spawn(function()
+        local ok, info = pcall(function() return Market:GetProductInfo(game.PlaceId) end)
+        if ok and info and info.Name and info.Name ~= "" then setMapName(info.Name) end
+    end)
     local Nav = New("ScrollingFrame", {
-        Position = UDim2.fromOffset(10, NAV_TOP), Size = UDim2.new(1, -20, 1, -NAV_TOP - 84 - MAP_H - 6),
+        Position = UDim2.fromOffset(10, NAV_TOP), Size = UDim2.new(1, -20, 1, -NAV_TOP - 84),
         BackgroundTransparency = 1, BorderSizePixel = 0, ScrollBarThickness = 2,
         ScrollBarImageColor3 = T.Muted, AutomaticCanvasSize = Enum.AutomaticSize.Y, CanvasSize = UDim2.new(),
     }, Sidebar)
@@ -817,64 +844,6 @@ function Flexozy:CreateWindow(cfg)
         AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -12, 0.5, 0), Size = UDim2.fromOffset(14, 20),
         Text = ">", TextXAlignment = Enum.TextXAlignment.Center, TextColor3 = T.Dim, Font = Enum.Font.GothamBold,
     })
-
-    -- การ์ดแสดงชื่อแมพ (ด้านล่างซ้าย เหนือโปรไฟล์) พร้อมชื่อวิ่งเมื่อยาวเกิน
-    local MapCard = New("Frame", {
-        Name = "MapCard", AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 10, 1, -78),
-        Size = UDim2.new(1, -20, 0, MAP_H), BackgroundColor3 = T.Card2, BackgroundTransparency = 0.6,
-        BorderSizePixel = 0, ClipsDescendants = true,
-    }, Sidebar)
-    Round(MapCard, 18)
-    New("UIStroke", { Color = WHITE, Thickness = 1, Transparency = 0.9, ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, MapCard)
-    local mapAccent = New("Frame", {
-        AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 0, 0.5, 0), Size = UDim2.fromOffset(3, 22),
-        BorderSizePixel = 0,
-    }, MapCard)
-    Round(mapAccent, 2)
-    AccentGrad(mapAccent, 90)
-    local mapIcon = New("ImageLabel", {
-        Position = UDim2.fromOffset(12, 8), Size = UDim2.fromOffset(32, 32), BackgroundColor3 = T.Card2,
-        ScaleType = Enum.ScaleType.Crop,
-        Image = "rbxthumb://type=GameIcon&id=" .. tostring(game.GameId) .. "&w=150&h=150",
-    }, MapCard)
-    Round(mapIcon, 10)
-    local mapTag = Label(MapCard, {
-        Position = UDim2.fromOffset(54, 7), Size = UDim2.new(1, -62, 0, 12), Text = "",
-        Font = Enum.Font.GothamBold, TextSize = 10, TextColor3 = T.Accent,
-    })
-    Loc("Map", "ui", function(t) mapTag.Text = string.upper(t) end)
-    Themed(function() mapTag.TextColor3 = T.Accent:Lerp(WHITE, 0.2) end)
-    local MAP_NAME_W = SIDE_W - 20 - 54 - 8
-    local nameClip = New("Frame", {
-        Position = UDim2.fromOffset(54, 21), Size = UDim2.fromOffset(MAP_NAME_W, 20),
-        BackgroundTransparency = 1, ClipsDescendants = true,
-    }, MapCard)
-    local mapName = Label(nameClip, {
-        Size = UDim2.fromOffset(MAP_NAME_W, 20), AutomaticSize = Enum.AutomaticSize.X, Text = game.Name,
-        Font = Enum.Font.GothamBold, TextSize = 12.5, TextTruncate = Enum.TextTruncate.None,
-    })
-    local marqueeTw
-    local function setMapName(nm)
-        if not mapName.Parent then return end
-        mapName.Text = nm
-        if marqueeTw then marqueeTw:Cancel() marqueeTw = nil end
-        mapName.Position = UDim2.fromOffset(0, 0)
-        task.delay(0.1, function()
-            if not mapName.Parent then return end
-            local over = mapName.TextBounds.X - MAP_NAME_W
-            if over > 2 then
-                marqueeTw = TweenService:Create(mapName, TweenInfo.new(
-                    math.max(over / 24, 1.6), Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1, true, 1.2
-                ), { Position = UDim2.fromOffset(-over - 4, 0) })
-                marqueeTw:Play()
-            end
-        end)
-    end
-    setMapName(game.Name)
-    task.spawn(function()
-        local ok, info = pcall(function() return Market:GetProductInfo(game.PlaceId) end)
-        if ok and info and info.Name and info.Name ~= "" then setMapName(info.Name) end
-    end)
 
     local Pop = New("Frame", {
         Name = "ProfilePopup", AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 16, 1, -88),
@@ -969,7 +938,7 @@ function Flexozy:CreateWindow(cfg)
     local function GetFooter()
         if not Footer then
             Footer = New("Frame", {
-                AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 10, 1, -(82 + MAP_H + 6)),
+                AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 10, 1, -82),
                 Size = UDim2.new(1, -20, 0, 0), AutomaticSize = Enum.AutomaticSize.Y,
                 BackgroundTransparency = 1
             }, Sidebar)
@@ -977,7 +946,7 @@ function Flexozy:CreateWindow(cfg)
                 SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 4),
                 VerticalAlignment = Enum.VerticalAlignment.Bottom
             }, Footer)
-            Nav.Size = UDim2.new(1, -20, 1, -NAV_TOP - 84 - MAP_H - 6 - 54)
+            Nav.Size = UDim2.new(1, -20, 1, -NAV_TOP - 84 - 54)
         end
         return Footer
     end
@@ -2932,6 +2901,9 @@ function Flexozy:CreateWindow(cfg)
         Main.BackgroundTransparency = 1 - o
         SideBg.BackgroundTransparency = math.clamp(0.35 + (1 - o) * 0.5, 0, 1)
     end
+    local function Shift(p, dy)
+        return UDim2.new(p.X.Scale, p.X.Offset, p.Y.Scale, p.Y.Offset + dy)
+    end
     function W:Toggle(show)
         if show == nil then show = not W.Shown end
         if show == W.Shown then return end
@@ -2941,17 +2913,29 @@ function Flexozy:CreateWindow(cfg)
         W._tok = (W._tok or 0) + 1
         local tok = W._tok
         if show then
-            Scale.Scale = target * 0.88
+            -- เปิด: เฟดเข้า + เลื่อนขึ้น + ขยายเด้งนิดๆ
+            local base = W._basePos or Main.Position
+            W._basePos = nil
+            Main.Position = Shift(base, 30)
+            Main.GroupTransparency = 1
+            Scale.Scale = target * 0.9
             Main.Visible = true
-            Tween(Scale, 0.32, { Scale = target }, Enum.EasingStyle.Back)
+            Tween(Main, 0.45, { Position = base, GroupTransparency = 0 }, Enum.EasingStyle.Quint)
+            Tween(Scale, 0.5, { Scale = target }, Enum.EasingStyle.Back)
         else
+            -- ปิด: เฟดออก + เลื่อนลง + ย่อลง
             SetProfile(false)
             W._ddOpen = nil
             Tip.Visible = false
-            Tween(Scale, 0.18, { Scale = target * 0.88 }, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-            task.delay(0.18, function()
+            local base = W._basePos or Main.Position
+            W._basePos = base
+            Tween(Main, 0.28, { Position = Shift(base, 30), GroupTransparency = 1 }, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+            Tween(Scale, 0.28, { Scale = target * 0.9 }, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+            task.delay(0.3, function()
                 if W._tok == tok and Gui.Parent then
                     Main.Visible = false
+                    Main.Position = base
+                    W._basePos = nil
                     Scale.Scale = target
                 end
             end)
@@ -2959,8 +2943,12 @@ function Flexozy:CreateWindow(cfg)
     end
     do
         local t = Scale.Scale
-        Scale.Scale = t * 0.88
-        Tween(Scale, 0.4, { Scale = t }, Enum.EasingStyle.Back)
+        local p = Main.Position
+        Main.GroupTransparency = 1
+        Main.Position = Shift(p, 30)
+        Scale.Scale = t * 0.9
+        Tween(Main, 0.6, { Position = p, GroupTransparency = 0 }, Enum.EasingStyle.Quint)
+        Tween(Scale, 0.6, { Scale = t }, Enum.EasingStyle.Back)
     end
     local collapsed, savedPos = false, nil
     local function VP()
@@ -3015,14 +3003,14 @@ function Flexozy:CreateWindow(cfg)
         Name = "ResizeHandle",
         Size = UDim2.fromOffset(32, 32),
         Position = UDim2.new(1, 0, 1, 0),
-        AnchorPoint = Vector2.new(0.5, 0.5),
+        AnchorPoint = Vector2.new(1, 1),
         BackgroundTransparency = 1,
         ZIndex = 99,
         Active = true,
     }, Main)
     local ResizeGlow = New("ImageLabel", {
         Size = UDim2.fromOffset(96, 96),
-        Position = UDim2.new(0.5, -16, 0.5, -16),
+        Position = UDim2.new(0.5, 0, 0.5, 0),
         AnchorPoint = Vector2.new(0.5, 0.5),
         BackgroundTransparency = 1,
         Image = CORNER_ASSET,
@@ -3083,7 +3071,7 @@ function Flexozy:CreateWindow(cfg)
     local barResizing, bStart, bSize = false, nil, nil
     local DragBar = New("TextButton", {
         AnchorPoint = Vector2.new(0.5, 0),
-        Position = UDim2.new(0.5, 0, 1, 4),
+        Position = UDim2.new(0.5, 0, 1, -20),
         Size = UDim2.fromOffset(170, 18),
         BackgroundTransparency = 1,
         Text = "",
